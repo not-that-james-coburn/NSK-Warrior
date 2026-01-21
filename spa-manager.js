@@ -328,6 +328,247 @@ async function deleteSaveState(keyName) {
 }
 
 /**
+ * Utility: Gets all keys belonging to a specific version prefix
+ */
+async function getVersionKeys(prefix) {
+  const db = await openStateDB();
+  return new Promise(resolve => {
+    const tx = db.transaction([STORE_STATES], 'readonly');
+    const req = tx.objectStore(STORE_STATES).getAllKeys();
+    req.onsuccess = () => resolve(req.result.filter(k => k.startsWith(prefix) && k.endsWith('.state')));
+    req.onerror = () => resolve([]);
+  });
+}
+
+// --- HELPERS FOR BUNDLING ---
+
+function blobToBase64(data) {
+  return new Promise((resolve, reject) => {
+    // SAFETY: If data is null/undefined, stop.
+    if (!data) return resolve(null);
+    
+    // SAFETY: If data is NOT a Blob (e.g. it's an ArrayBuffer), convert it.
+    let blob = data;
+    if (!(data instanceof Blob)) {
+      // Wrap raw data/buffers in a Blob
+      blob = new Blob([data]);
+    }
+    
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function base64ToBlob(base64, fallbackType = 'application/octet-stream') {
+  // Safety: Ensure input is a string
+  if (typeof base64 !== 'string') return null;
+
+  // Check if it has the standard Data URI prefix
+  const parts = base64.split(',');
+  let mime = fallbackType;
+  let dataStr = base64;
+
+  if (parts.length > 1) {
+    // Has prefix (e.g., "data:image/png;base64,...")
+    // safely extract mime type
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    if (mimeMatch) mime = mimeMatch[1];
+    dataStr = parts[1];
+  }
+
+  // Decode
+  try {
+    const bstr = atob(dataStr);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  } catch (e) {
+    console.error("Failed to convert Base64 to Blob:", e);
+    return null;
+  }
+}
+
+/**
+ * SHARE: Exports State + Screenshot as a Bundle
+ */
+async function shareSave(uniqueId) {
+  // Define variables outside try block for reuse in fallback
+  let stateBlob = null;
+  let screenshotData = null;
+  
+  try {
+    // 1. Fetch Data
+    stateBlob = await getSaveBlob(uniqueId);
+    if (!stateBlob) {
+      showModal("Error: Save file is empty or missing.", "alert");
+      return;
+    }
+    
+    screenshotData = await loadScreenshot(uniqueId);
+    
+    // 2. Prepare Bundle (JSON)
+    // The new blobToBase64 handles ArrayBuffers safely now.
+    const bundle = {
+      type: 'NSK_WARRIOR_BUNDLE',
+      version: 1,
+      timestamp: new Date().toISOString(),
+      stateData: await blobToBase64(stateBlob),
+      screenshotImage: screenshotData?.image ? await blobToBase64(screenshotData.image) : null,
+      screenshotDate: screenshotData?.created || null
+    };
+    
+    const jsonString = JSON.stringify(bundle);
+    const fileContent = new Blob([jsonString], { type: 'text/plain' });
+    
+    // 3. Prepare File
+    // We use .txt to satisfy Android Share Sheet requirements
+    const shareFile = new File([fileContent], `${uniqueId}.state.txt`, { type: "text/plain" });
+    
+    // 4. Share
+    const shareData = {
+      files: [shareFile],
+      title: `${uniqueId}`,
+      text: 'Exporting save bundle with screenshot.'
+    };
+    
+    if (navigator.canShare && navigator.canShare(shareData)) {
+      await navigator.share(shareData);
+    } else {
+      throw new Error("Native sharing not supported");
+    }
+    
+  } catch (err) {
+    console.warn("Share API failed, falling back to download.", err);
+    
+    // --- FALLBACK: DOWNLOAD AS BUNDLE ---
+    // If share fails, we still want to give them the Bundle (JSON), not just the raw state.
+    try {
+      if (stateBlob) {
+        // Re-create the bundle for download
+        const bundle = {
+          type: 'NSK_WARRIOR_BUNDLE',
+          version: 1,
+          timestamp: new Date().toISOString(),
+          stateData: await blobToBase64(stateBlob),
+          screenshotImage: screenshotData?.image ? await blobToBase64(screenshotData.image) : null,
+          screenshotDate: screenshotData?.created || null
+        };
+        
+        const jsonString = JSON.stringify(bundle);
+        const blob = new Blob([jsonString], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        // For direct download, we can use the specific double extension safely
+        a.download = `${uniqueId}.state.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (dlErr) {
+      console.error("Download fallback failed", dlErr);
+      showModal("Download failed.", "alert");
+    }
+  }
+}
+
+/**
+ * IMPORT: Handles Bundles (JSON) or Raw States
+ */
+async function importSave(uniqueId, verId, container) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.state, .txt, .json';
+
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 1. READ FILE IMMEDIATELY (Prevent security timeout)
+    let fileBuffer;
+    try {
+      fileBuffer = await file.arrayBuffer();
+    } catch (readErr) {
+      console.error(readErr);
+      showModal("Failed to read file.", "alert");
+      return;
+    }
+
+    // 2. USER CONFIRMATION
+    const confirm = await showModal(`Overwrite Slot with ${file.name}?`, 'confirm');
+    if (!confirm) return;
+
+    // 3. PARSE DATA (Before touching DB)
+    let isBundle = false;
+    let stateBlobToSave = null;
+    let screenshotToSave = null;
+    let createdDate = null;
+
+    try {
+      const textDecoder = new TextDecoder();
+      const textContent = textDecoder.decode(fileBuffer);
+      const json = JSON.parse(textContent);
+
+      if (json.type === 'NSK_WARRIOR_BUNDLE') {
+        isBundle = true;
+        if (json.stateData) {
+          stateBlobToSave = base64ToBlob(json.stateData, 'application/octet-stream');
+        }
+        if (json.screenshotImage) {
+          screenshotToSave = base64ToBlob(json.screenshotImage, 'image/png');
+          createdDate = json.screenshotDate;
+        }
+      }
+    } catch (e) {
+      isBundle = false;
+    }
+
+    if (!stateBlobToSave) {
+      stateBlobToSave = new Blob([fileBuffer]);
+    }
+
+    // 4. OPEN ALL DATABASES (Before starting transactions)
+    const dbState = await openStateDB();
+    const dbScreen = await openScreenshotDB();
+
+    if (!dbState) {
+        showModal("Database Error: Could not open State DB", "alert");
+        return;
+    }
+
+    // 5. PERFORM TRANSACTIONS (Synchronously queued)
+    
+    // Transaction A: Save State
+    const txState = dbState.transaction([STORE_STATES], 'readwrite');
+    txState.objectStore(STORE_STATES).put(stateBlobToSave, uniqueId + ".state");
+
+    txState.onerror = (err) => console.error("State DB Error:", err);
+
+    // Transaction B: Save Screenshot (Only if exists)
+    if (screenshotToSave && dbScreen) {
+      const txScreen = dbScreen.transaction([STORE_SCREENSHOTS], 'readwrite');
+      txScreen.objectStore(STORE_SCREENSHOTS).put({
+        image: screenshotToSave,
+        created: createdDate || new Date().toLocaleString()
+      }, uniqueId);
+    }
+
+    txState.oncomplete = () => {
+      showModal("Import Successful", "alert");
+      renderSaveSlots(verId, container);
+    };
+  };
+  input.click();
+}
+
+/**
  * Custom Modal Helper (Replaces alert/confirm)
  * Returns a Promise: true (Confirm/OK) or false (Cancel)
  */
@@ -542,9 +783,9 @@ function initVersionMenuStructure() {
   });
 }
 
-function toggleDeleteMode(verId, container) {
-  if (globalMode === 'PLAY') globalMode = 'DELETE';
-  else if (globalMode === 'DELETE') globalMode = 'PLAY';
+function toggleManageMode(verId, container) {
+  if (globalMode === 'PLAY') globalMode = 'MANAGE';
+  else if (globalMode === 'MANAGE') globalMode = 'PLAY';
   
   // Refresh only the container that triggered this
   renderSaveSlots(verId, container);
@@ -566,6 +807,25 @@ function createBtn(text, onClick) {
   btn.onclick = (e) => {
     e.stopPropagation();
     onClick(e);
+  };
+  return btn;
+}
+
+function createSVGBtn(icon, color, onClick) {
+  const btn = document.createElement('button');
+  btn.innerHTML = icon;
+  btn.style.cssText = `
+        width: 42px; height: 42px; border-radius: 50%; border: none;
+        outline: none; -webkit-tap-highlight-color: transparent;
+        background: ${color}; color: white; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: transform 0.1s;
+    `;
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    btn.style.transform = "scale(0.9)";
+    setTimeout(() => btn.style.transform = "scale(1)", 100);
+    onClick();
   };
   return btn;
 }
@@ -744,28 +1004,42 @@ async function renderSaveSlots(verId, container) {
       // APPEND BUTTON
       row.appendChild(actionBtn);
     }
-    // 2. DELETE MODE
-    else if (globalMode === 'DELETE') {
-      if (status === "Saved Game") {
-        actionBtn.innerText = "Delete";
-        actionBtn.style.cssText += "animation: start_button_pulse 2s infinite;";
-        
-        actionBtn.onclick = async (e) => {
-          e.stopPropagation();
-          const confirmDelete = await showModal(`Permanently delete Slot ${i}?`, 'confirm');
-          if (confirmDelete) {
+    // 2. MANAGE MODE (Updated from Delete Mode)
+    else if (globalMode === 'MANAGE') {
+      
+      const btnGroup = document.createElement('div');
+      btnGroup.style.cssText = 'display:flex; margin-left:auto;';
+      
+      // --- DELETE SAVE FILE BUTTON ---
+      const delBtn = createSVGBtn(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a00000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" role="img" title="Delete File">
+        <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+        '#00000000', async () => {
+          if (status !== "Saved Game") return;
+          const confirm = await showModal(`Delete Slot ${i}?`, 'confirm');
+          if (confirm) {
             await deleteSaveState(uniqueId);
             renderSaveSlots(verId, container);
           }
-        };
-        // APPEND BUTTON
-        row.appendChild(actionBtn);
-      } else {
-        // Spacer for empty slots to maintain alignment
-        const spacer = document.createElement('div');
-        spacer.style.width = "60px";
-        row.appendChild(spacer);
-      }
+        });
+      if (status !== "Saved Game") delBtn.style.opacity = '0.3';
+      
+      // --- SHARE SAVE FILE BUTTON ---
+      const shareBtn = createSVGBtn(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>',
+        '#00000000', async () => {
+          if (status !== "Saved Game") return;
+          await shareSave(uniqueId);
+        });
+      if (status !== "Saved Game") shareBtn.style.opacity = '0.3';
+      
+      // --- IMPORT SAVE FILE BUTTON ---
+      const impBtn = createSVGBtn(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="1" y2="12"></line></svg>',
+        '#00000000', () => importSave(uniqueId, verId, container));
+      
+      btnGroup.append(delBtn, shareBtn, impBtn);
+      row.appendChild(btnGroup);
     }
     // 3. PLAY / LOAD MODE
     else {
@@ -787,10 +1061,10 @@ async function renderSaveSlots(verId, container) {
         };
       }
       else if (status === "Empty") {
-        const storageKey = `${verId}_UPDATE_ACKNOWLEDGED`; 
+        const storageKey = `${verId}_UPDATE_ACKNOWLEDGED`;
         const lastSeenVersion = localStorage.getItem(storageKey);
         const showUpdateTag = config.updated && (lastSeenVersion !== config.updated);
-
+        
         if (showUpdateTag) {
           actionBtn.innerText = "Updated";
           actionBtn.classList.add('pulse');
@@ -821,7 +1095,6 @@ async function renderSaveSlots(verId, container) {
           }
         };
       }
-      // APPEND BUTTON
       row.appendChild(actionBtn);
     }
     
@@ -833,26 +1106,26 @@ async function renderSaveSlots(verId, container) {
   
   // --- FOOTER ELEMENTS ---
   
-  // 1. Delete Mode Toggle (Only in PLAY/DELETE - Main Menu)
-  if (globalMode === 'PLAY' || globalMode === 'DELETE') {
+  // 1. MANAGE Mode Toggle (Only in PLAY/MANAGE - Main Menu)
+  if (globalMode === 'PLAY' || globalMode === 'MANAGE') {
     const toggleRow = document.createElement('div');
     toggleRow.style.textAlign = "center";
     toggleRow.style.padding = "10px";
     toggleRow.style.borderTop = "1px solid #333";
     
     const toggleBtn = document.createElement('button');
-    toggleBtn.innerText = (globalMode === 'DELETE') ? "Done Deleting" : "Manage Saves";
+    toggleBtn.innerText = (globalMode === 'MANAGE') ? "Done" : "Manage Saves";
     toggleBtn.style.cssText = "background: transparent; color: #888; border: 1px solid #555; padding: 5px 15px; border-radius: 20px; font-size: 11px; cursor: pointer;";
     
     toggleBtn.onclick = (e) => {
       e.stopPropagation();
-      toggleDeleteMode(verId, container);
+      toggleManageMode(verId, container);
     };
     
     toggleRow.appendChild(toggleBtn);
     container.appendChild(toggleRow);
   }
-  
+
   // 2. Tab-Style Close Button (Only in SAVE/LOAD - In Game)
   if (globalMode === 'SAVE' || globalMode === 'LOAD') {
     // Switch to relative position for in game menu to center over game screen
@@ -1138,7 +1411,6 @@ async function launchGame(verId, slotNum) {
   console.log("Threads enabled?", EJS_threads);
   window.EJS_Buttons = { restart: false };
   window.EJS_defaultOptions = { 'save-state-location': 'browser' };
-  window.EJS_DEBUG_XX = true;
   
   let rawData = await getSaveBlob(uniqueId);
   if (rawData) {
