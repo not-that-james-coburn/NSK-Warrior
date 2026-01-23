@@ -30,7 +30,7 @@ const APP_CONFIG = {
       loadState: "/versions/keen-fine/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR KF"],
-      comingSoon: true,
+      versionAlert: true,
       alertMessage: "Please wait for next update.\nComing soon!",
       updated: "1.1"
     },
@@ -39,11 +39,11 @@ const APP_CONFIG = {
       prefix: "TEST_PLAY",
       loadState: "/versions/test-play/RPG Maker (USA).state",
       slots: 8,
-      comingSoon: true,
+      versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
-      updated: "1.3", // Jim broom dialogue, secret tower dialogue, filter room 
-      info: false,
-      infoMessage: "This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'",
+      updated: "1.4", // Assembly Cart cinematic, Filter rooms
+      versionInfo: true,
+      infoMessage: "***CRITICAL BUG FIX***\n\nThis version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'",
     }
   }
 };
@@ -923,7 +923,7 @@ async function handleVersionSelect(verId) {
   });
   
   const config = APP_CONFIG.versions[verId];
-  if (config.comingSoon) { await showModal(config.alertMessage, 'alert'); return; }
+  if (config.versionAlert === true) { await showModal(config.alertMessage, 'alert'); return; }
   
   const container = document.getElementById(`slots-${verId}`);
   if (container.classList.contains('open')) {
@@ -931,9 +931,9 @@ async function handleVersionSelect(verId) {
   } else {
     await renderSaveSlots(verId, container);
   }
-  if (config.info) {
-    await showModal(infoMessage, 'info');
-    config.info = false;
+  if (config.versionInfo === true) {
+    await showModal(config.infoMessage, 'info');
+    config.versionInfo = false;
     return;
   }
 }
