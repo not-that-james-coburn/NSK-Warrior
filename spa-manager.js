@@ -42,7 +42,8 @@ const APP_CONFIG = {
       comingSoon: true,
       alertMessage: "Please wait for next update.\nComing soon!",
       updated: "1.3", // Jim broom dialogue, secret tower dialogue, filter room 
-      //info: true
+      info: false,
+      infoMessage: "This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'",
     }
   }
 };
@@ -926,7 +927,7 @@ async function handleVersionSelect(verId) {
     await renderSaveSlots(verId, container);
   }
   if (config.info) {
-    await showModal("This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'", 'info');
+    await showModal(config.infoMessage, 'info');
     config.info = false;
     return;
   }
