@@ -31,7 +31,7 @@ const APP_CONFIG = {
       slots: 8,
       legacyKeys: ["NSK WARRIOR KF"],
       comingSoon: true,
-      alertMessage: "Please wait for next update.\\nComing soon!",
+      alertMessage: "Please wait for next update.\nComing soon!",
       updated: "1.1"
     },
     'tp': {
@@ -40,7 +40,7 @@ const APP_CONFIG = {
       loadState: "/versions/test-play/RPG Maker (USA).state",
       slots: 8,
       comingSoon: true,
-      alertMessage: "Please wait for next update.\\nComing soon!",
+      alertMessage: "Please wait for next update.\nComing soon!",
       updated: "1.3", // Jim broom dialogue, secret tower dialogue, filter room 
       //info: true
     }
