@@ -555,17 +555,22 @@ async function importSave(uniqueId, verId, container) {
 
     txState.onerror = (err) => console.error("State DB Error:", err);
 
-    // Transaction B: Save Screenshot (Only if exists)
-    if (screenshotToSave && dbScreen) {
-      const txScreen = dbScreen.transaction([STORE_SCREENSHOTS], 'readwrite');
-      txScreen.objectStore(STORE_SCREENSHOTS).put({
+    // --- Transaction B: Handle Screenshot (Update OR Delete) ---
+    const txScreen = dbScreen.transaction([STORE_SCREENSHOTS], 'readwrite');
+    const screenStore = txScreen.objectStore(STORE_SCREENSHOTS);
+
+    if (screenshotToSave) {
+      screenStore.put({
         image: screenshotToSave,
         created: createdDate || new Date().toLocaleString()
       }, uniqueId);
+    } else {
+      screenStore.delete(uniqueId);
     }
-
+    
     txState.oncomplete = () => {
       showModal("Import Successful", "alert");
+      globalMode = 'PLAY';
       renderSaveSlots(verId, container);
     };
   };
@@ -927,7 +932,7 @@ async function handleVersionSelect(verId) {
     await renderSaveSlots(verId, container);
   }
   if (config.info) {
-    await showModal(config.infoMessage, 'info');
+    await showModal(infoMessage, 'info');
     config.info = false;
     return;
   }
