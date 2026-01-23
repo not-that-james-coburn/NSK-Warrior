@@ -30,7 +30,8 @@ const APP_CONFIG = {
       loadState: "/versions/keen-fine/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR KF"],
-      comingSoon: false,
+      comingSoon: true,
+      alertMessage: "Please wait for next update.\\nComing soon!",
       updated: "1.1"
     },
     'tp': {
@@ -38,8 +39,10 @@ const APP_CONFIG = {
       prefix: "TEST_PLAY",
       loadState: "/versions/test-play/RPG Maker (USA).state",
       slots: 8,
+      comingSoon: true,
+      alertMessage: "Please wait for next update.\\nComing soon!",
       updated: "1.3", // Jim broom dialogue, secret tower dialogue, filter room 
-      info: true
+      //info: true
     }
   }
 };
@@ -914,7 +917,7 @@ async function handleVersionSelect(verId) {
   });
   
   const config = APP_CONFIG.versions[verId];
-  if (config.comingSoon) { await showModal("Coming soon!", 'alert'); return; }
+  if (config.comingSoon) { await showModal(config.alertMessage, 'alert'); return; }
   
   const container = document.getElementById(`slots-${verId}`);
   if (container.classList.contains('open')) {
