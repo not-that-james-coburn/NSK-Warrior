@@ -6,8 +6,8 @@
 const APP_CONFIG = {
   ejsPath: "emulatorjs/4.0.9/data/",
   core: "mednafen_psx_hw",
-  biosUrl: "/api/serve-game/scph5501.bin?key=bios", 
-  gameUrl: "/api/serve-game/RPG_Maker_USA.zip?key=rom", 
+  biosUrl: "/api/serve-game/scph5501.bin?key=bios",
+  gameUrl: "/api/serve-game/RPG_Maker_USA.zip?key=rom",
   
   versions: {
     'og': {
@@ -30,9 +30,11 @@ const APP_CONFIG = {
       loadState: "/versions/keen-fine/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR KF"],
-      versionAlert: true,
+      versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
-      updated: "1.1"
+      updated: "1.2",
+      versionInfo: true,
+      infoMessage: "***CRITICAL BUG FIX***\n\nIn this update:\n\n* Restored Assembly cinematic\n* Filter Room refresh\n* Improved Assembly side quests",
     },
     'tp': {
       label: "Test Play",
@@ -41,7 +43,7 @@ const APP_CONFIG = {
       slots: 8,
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
-      updated: "1.4", // Assembly Cart cinematic, Filter rooms
+      updated: "1.5", // Assembly Cart cinematic, Filter rooms, Assembly quests
       versionInfo: true,
       infoMessage: "***CRITICAL BUG FIX***\n\nThis version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'",
     }
@@ -368,12 +370,12 @@ function blobToBase64(data) {
 function base64ToBlob(base64, fallbackType = 'application/octet-stream') {
   // Safety: Ensure input is a string
   if (typeof base64 !== 'string') return null;
-
+  
   // Check if it has the standard Data URI prefix
   const parts = base64.split(',');
   let mime = fallbackType;
   let dataStr = base64;
-
+  
   if (parts.length > 1) {
     // Has prefix (e.g., "data:image/png;base64,...")
     // safely extract mime type
@@ -381,7 +383,7 @@ function base64ToBlob(base64, fallbackType = 'application/octet-stream') {
     if (mimeMatch) mime = mimeMatch[1];
     dataStr = parts[1];
   }
-
+  
   // Decode
   try {
     const bstr = atob(dataStr);
@@ -490,11 +492,11 @@ async function importSave(uniqueId, verId, container) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.state, .txt, .json';
-
+  
   input.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
+    
     // 1. READ FILE IMMEDIATELY (Prevent security timeout)
     let fileBuffer;
     try {
@@ -504,22 +506,22 @@ async function importSave(uniqueId, verId, container) {
       showModal("Failed to read file.", "alert");
       return;
     }
-
+    
     // 2. USER CONFIRMATION
     const confirm = await showModal(`Overwrite Slot with ${file.name}?`, 'confirm');
     if (!confirm) return;
-
+    
     // 3. PARSE DATA (Before touching DB)
     let isBundle = false;
     let stateBlobToSave = null;
     let screenshotToSave = null;
     let createdDate = null;
-
+    
     try {
       const textDecoder = new TextDecoder();
       const textContent = textDecoder.decode(fileBuffer);
       const json = JSON.parse(textContent);
-
+      
       if (json.type === 'NSK_WARRIOR_BUNDLE') {
         isBundle = true;
         if (json.stateData) {
@@ -533,32 +535,32 @@ async function importSave(uniqueId, verId, container) {
     } catch (e) {
       isBundle = false;
     }
-
+    
     if (!stateBlobToSave) {
       stateBlobToSave = new Blob([fileBuffer]);
     }
-
+    
     // 4. OPEN ALL DATABASES (Before starting transactions)
     const dbState = await openStateDB();
     const dbScreen = await openScreenshotDB();
-
+    
     if (!dbState) {
-        showModal("Database Error: Could not open State DB", "alert");
-        return;
+      showModal("Database Error: Could not open State DB", "alert");
+      return;
     }
-
+    
     // 5. PERFORM TRANSACTIONS (Synchronously queued)
     
     // Transaction A: Save State
     const txState = dbState.transaction([STORE_STATES], 'readwrite');
     txState.objectStore(STORE_STATES).put(stateBlobToSave, uniqueId + ".state");
-
+    
     txState.onerror = (err) => console.error("State DB Error:", err);
-
+    
     // --- Transaction B: Handle Screenshot (Update OR Delete) ---
     const txScreen = dbScreen.transaction([STORE_SCREENSHOTS], 'readwrite');
     const screenStore = txScreen.objectStore(STORE_SCREENSHOTS);
-
+    
     if (screenshotToSave) {
       screenStore.put({
         image: screenshotToSave,
@@ -1134,7 +1136,7 @@ async function renderSaveSlots(verId, container) {
     toggleRow.appendChild(toggleBtn);
     container.appendChild(toggleRow);
   }
-
+  
   // 2. Tab-Style Close Button (Only in SAVE/LOAD - In Game)
   if (globalMode === 'SAVE' || globalMode === 'LOAD') {
     // Switch to relative position for in game menu to center over game screen
