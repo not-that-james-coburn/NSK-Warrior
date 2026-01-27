@@ -32,9 +32,9 @@ const APP_CONFIG = {
       legacyKeys: ["NSK WARRIOR KF"],
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
-      updated: "1.3",
+      updated: "1.4",
       versionInfo: true,
-      infoMessage: "***CRITICAL BUG FIX***\n\nIn this update:\n\n* Restored Assembly cinematic\n* Filter Room refresh\n* Improved Assembly side quests\n* FIX: Cram-a-lot",
+      infoMessage: "***CRITICAL BUG FIXES***\n\nIn this update:\n\n* Restored Assembly cinematic\n* Filter Room refresh\n* Improved Assembly side quests\n* FIX: Cram-a-lot",
     },
     'tp': {
       label: "Test Play",
@@ -43,9 +43,9 @@ const APP_CONFIG = {
       slots: 8,
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
-      updated: "1.6", // Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests
+      updated: "1.7", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests
       versionInfo: true,
-      infoMessage: "***CRITICAL BUG FIX***\n\nThis version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'",
+      infoMessage: "***CRITICAL BUG FIXES***\n\nThis version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'",
     }
   }
 };
