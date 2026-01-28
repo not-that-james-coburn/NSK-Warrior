@@ -35,7 +35,7 @@ const APP_CONFIG = {
       updated: "1.7",
       versionInfo: true,
       get infoMessage() {
-        return `***CRITICAL BUG FIXES***\n\nIn this update v${this.updated}:\n\n* Restored Assembly cinematic\n*Cram-a-lot fix\n*Cart rescue fix\n\n* Filter Room refresh\n* Improved Assembly side quests`;
+        return `UPDATE v${this.updated}:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n*Cram-a-lot fix\n*Cart rescue fix\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests`;
       },
     },
     'tp': {
