@@ -32,9 +32,11 @@ const APP_CONFIG = {
       legacyKeys: ["NSK WARRIOR KF"],
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
-      updated: "1.4",
+      updated: "1.7",
       versionInfo: true,
-      infoMessage: "***CRITICAL BUG FIXES***\n\nIn this update:\n\n* Restored Assembly cinematic\n* Filter Room refresh\n* Improved Assembly side quests\n* FIX: Cram-a-lot",
+      get infoMessage() {
+        return `***CRITICAL BUG FIXES***\n\nIn this update v${this.updated}:\n\n* Restored Assembly cinematic\n*Cram-a-lot fix\n*Cart rescue fix\n\n* Filter Room refresh\n* Improved Assembly side quests`;
+      },
     },
     'tp': {
       label: "Test Play",
@@ -45,7 +47,9 @@ const APP_CONFIG = {
       alertMessage: "Please wait for next update.\nComing soon!",
       updated: "1.7", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests
       versionInfo: true,
-      infoMessage: "***CRITICAL BUG FIXES***\n\nThis version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'",
+      get infoMessage() {
+        return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'\n\nUPDATED to v${this.updated}`;
+      },
     }
   }
 };
@@ -779,10 +783,25 @@ function initVersionMenuStructure() {
     
     const btn = document.createElement('button');
     btn.className = 'select_button version-select-btn';
-    btn.innerText = config.label;
+    
+    if (config.versionInfo) {
+      btn.innerText = config.label;
+      const infoBtn = createSVGBtn(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"fill="none" stroke="white" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="square"><circle cx="12" cy="12" r="8"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+        '#00000000', async () => {
+          if (config.infoMessage) await showModal(config.infoMessage, 'info');
+        });
+      btn.style.paddingRight = "0.2em";
+      btn.appendChild(infoBtn);
+    }
+    else btn.innerText = config.label;
     btn.onclick = () => handleVersionSelect(id);
     btn.dataset.verId = id;
-    if (id === "tp") btn.style.cssText = "background: rgba(50, 0, 0, 0.9); border: 1px solid #a00000";
+    
+    if (id === "tp") {
+      btn.style.background = "rgba(50, 0, 0, 0.9)";
+      btn.style.border = "1px solid #a00000";
+    }
     
     const container = document.createElement('div');
     container.id = `slots-${id}`;
@@ -932,11 +951,6 @@ async function handleVersionSelect(verId) {
     container.classList.remove('open');
   } else {
     await renderSaveSlots(verId, container);
-  }
-  if (config.versionInfo === true) {
-    await showModal(config.infoMessage, 'info');
-    config.versionInfo = false;
-    return;
   }
 }
 
