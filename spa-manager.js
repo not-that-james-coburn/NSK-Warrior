@@ -15,14 +15,22 @@ const APP_CONFIG = {
       prefix: "NSK_WARRIOR_0",
       loadState: "/versions/original/RPG Maker (USA).state",
       slots: 8,
-      legacyKeys: ["NSK WARRIOR", "NSK_WARRIOR_OG", "NSK_WARRIOR_OG_1", "NSK_WARRIOR_OG_2", "NSK_WARRIOR_OG_3", "NSK_WARRIOR_OG_4"]
+      legacyKeys: ["NSK WARRIOR", "NSK_WARRIOR_OG", "NSK_WARRIOR_OG_1", "NSK_WARRIOR_OG_2", "NSK_WARRIOR_OG_3", "NSK_WARRIOR_OG_4"],
+      versionInfo: false,
+      get infoMessage() {
+        return "Original Version (2008)\n\nUnfiltered, unmodified.\nAll the nuances, quirks and occasional bugs of the first release.";
+      },
     },
     'v1.1': {
       label: "Version 1.1",
       prefix: "NSK_WARRIOR_V1",
       loadState: "/versions/v1.1/RPG Maker (USA).state",
       slots: 8,
-      legacyKeys: ["NSK WARRIOR v1.1", "NSK_WARRIOR_v1.1", "NSK_WARRIOR_v1.1_1", "NSK_WARRIOR_v1.1_2", "NSK_WARRIOR_v1.1_3", "NSK_WARRIOR_v1.1_4"]
+      legacyKeys: ["NSK WARRIOR v1.1", "NSK_WARRIOR_v1.1", "NSK_WARRIOR_v1.1_1", "NSK_WARRIOR_v1.1_2", "NSK_WARRIOR_v1.1_3", "NSK_WARRIOR_v1.1_4"],
+      versionInfo: false,
+      get infoMessage() {
+        return "Version 1.1 (2024)\n\nSame base game with a few additions. Notably:\n\n*Bug fixes\n*New Skills system";
+      },
     },
     'kf': {
       label: "Keen-Fine Edition",
@@ -32,10 +40,10 @@ const APP_CONFIG = {
       legacyKeys: ["NSK WARRIOR KF"],
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
-      update: "1.8",
+      update: "1.9",
       versionInfo: true,
       get infoMessage() {
-        return `UPDATE v${this.update}:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n*Cram-a-lot fix\n*Cart rescue fix\n*Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests`;
+        return `UPDATE v${this.update}:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n* Cram-a-lot fix\n*Cart rescue fix\n* Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests\n* Boss difficulty tweeked\n\n Finished??`;
       },
     },
     'tp': {
@@ -45,7 +53,7 @@ const APP_CONFIG = {
       slots: 8,
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
-      update: "1.8", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests
+      update: "1.9", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests, Assembly door fix, bosses difficulty tweeked up
       versionInfo: true,
       get infoMessage() {
         return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'\n\nUPDATED to v${this.update}`;
