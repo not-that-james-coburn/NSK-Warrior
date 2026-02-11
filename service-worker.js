@@ -87,36 +87,52 @@ self.addEventListener('fetch', event => {
     const decodedPath = decodeURI(requestUrl.pathname);
 
     // --- 1. SPECIAL HANDLER: Game Assets (ROM/BIOS) ---
-    // This catches Netlify function calls
     if (decodedPath.includes('/api/serve-game') || decodedPath.includes('.netlify/functions')) {
         event.respondWith(
-            caches.open(APP_CACHE).then(cache => {
-                // strict matching including query params (key=rom)
-                return cache.match(event.request).then(cachedResponse => {
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
+            (async () => {
+                // A. Try Cache First (ignoring Vary header for safety)
+                const cache = await caches.open(APP_CACHE);
+                const cachedResponse = await cache.match(event.request, { ignoreVary: true }); // <--- FIX 1
+                
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+
+                // B. Network Fallback
+                try {
+                    const networkResponse = await fetch(event.request);
                     
-                    return fetch(event.request).then(networkResponse => {
-                        // Validate response before caching
-                        if (!networkResponse || networkResponse.status !== 200) {
-                            return networkResponse;
-                        }
+                    // Only cache valid full downloads (Status 200), not partials (206) or errors
+                    if (networkResponse.status === 200) {
                         
-                        const responseToCache = networkResponse.clone();
-                        
-                        cache.put(event.request, responseToCache).catch(err => {
-                             console.warn('Failed to cache game asset:', err);
+                        // C. Create a "Clean" Response for the Cache (Strip 'Vary' header)
+                        // We must recreate the response to modify headers
+                        const responseToCache = new Response(networkResponse.clone().body, {
+                            status: networkResponse.status,
+                            statusText: networkResponse.statusText,
+                            headers: new Headers(networkResponse.headers)
                         });
                         
-                        return networkResponse;
-                    });
-                });
-            })
+                        // FIX 2: Delete the Vary header so offline matching works
+                        responseToCache.headers.delete('Vary'); 
+
+                        // FIX 3: Don't await this! Use waitUntil to run it in background
+                        // This lets the game load while the cache writes to disk
+                        event.waitUntil(
+                            cache.put(event.request, responseToCache)
+                                .catch(err => console.warn('Background cache failed:', err))
+                        );
+                    }
+                    
+                    return networkResponse;
+                } catch (error) {
+                    console.error("Fetch failed:", error);
+                    throw error;
+                }
+            })()
         );
         return;
     }
-
     // --- 2. NETWORK FIRST FILES ---
     if (networkFirstFiles.includes(decodedPath)) {
         event.respondWith(
