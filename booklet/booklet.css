@@ -102,7 +102,7 @@
 }
 
 #book-container {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
   width: 100vw;
@@ -120,7 +120,6 @@
   z-index: 40;
   transition: margin-left 0.2s ease-in-out, left 0.6s ease !important;
   -webkit-transition: margin-left 0.2s ease-in-out, left 0.6s ease !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
 }
 
 @keyframes rollIn {
@@ -155,6 +154,7 @@
 #page {
   height: 100%;
   width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
 }
 
 #page img {

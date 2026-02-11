@@ -1,4 +1,4 @@
-const APP_CACHE = 'nsk-warrior-cache-v007';
+const APP_CACHE = 'nsk-warrior-cache-v008';
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -10,6 +10,7 @@ const networkFirstFiles = [
     '/spa-manager.js',
     '/gamepad.js',
     '/loading-ring.js',
+    '/images/bearing.gif',
     '/versions/keen-fine/RPG Maker (USA).state',
     '/versions/test-play/RPG Maker (USA).state'
 ];
@@ -53,7 +54,7 @@ self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(APP_CACHE).then(cache => {
-            // We can silently fail on individual files to prevent the whole install from breaking
+            // Silently fail on individual files to prevent the whole install from breaking
             return Promise.all(
                 urlsToCache.map(url => {
                     return fetch(url).then(response => {
@@ -92,38 +93,29 @@ self.addEventListener('fetch', event => {
             (async () => {
                 // A. Try Cache First (ignoring Vary header for safety)
                 const cache = await caches.open(APP_CACHE);
-                const cachedResponse = await cache.match(event.request, { ignoreVary: true }); // <--- FIX 1
+                const cachedResponse = await cache.match(event.request, { ignoreVary: true });
                 
                 if (cachedResponse) {
                     return cachedResponse;
                 }
-
                 // B. Network Fallback
                 try {
                     const networkResponse = await fetch(event.request);
                     
-                    // Only cache valid full downloads (Status 200), not partials (206) or errors
                     if (networkResponse.status === 200) {
-                        
                         // C. Create a "Clean" Response for the Cache (Strip 'Vary' header)
-                        // We must recreate the response to modify headers
                         const responseToCache = new Response(networkResponse.clone().body, {
                             status: networkResponse.status,
                             statusText: networkResponse.statusText,
                             headers: new Headers(networkResponse.headers)
                         });
-                        
-                        // FIX 2: Delete the Vary header so offline matching works
                         responseToCache.headers.delete('Vary'); 
-
-                        // FIX 3: Don't await this! Use waitUntil to run it in background
-                        // This lets the game load while the cache writes to disk
+                        // Use waitUntil to let the game load while the cache writes to disk in background
                         event.waitUntil(
                             cache.put(event.request, responseToCache)
                                 .catch(err => console.warn('Background cache failed:', err))
                         );
                     }
-                    
                     return networkResponse;
                 } catch (error) {
                     console.error("Fetch failed:", error);
@@ -156,7 +148,7 @@ self.addEventListener('fetch', event => {
         event.respondWith(
             caches.match(event.request).then(response => {
                 return response || fetch(event.request).then(networkResponse => {
-                     // Check if valid to cache (skip non-GET, non-200)
+                    
                     if (!networkResponse || networkResponse.status !== 200 || event.request.method !== 'GET') {
                         return networkResponse;
                     }
