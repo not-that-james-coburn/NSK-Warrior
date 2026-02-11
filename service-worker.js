@@ -1,4 +1,4 @@
-const APP_CACHE = 'nsk-warrior-cache-v006';
+const APP_CACHE = 'nsk-warrior-cache-v007';
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -13,6 +13,8 @@ const networkFirstFiles = [
     '/versions/keen-fine/RPG Maker (USA).state',
     '/versions/test-play/RPG Maker (USA).state'
 ];
+
+// Pre-cache list
 const urlsToCache = [
     '/',
     '/images/NSK_Warrior_title.mp4',
@@ -51,17 +53,16 @@ self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(APP_CACHE).then(cache => {
+            // We can silently fail on individual files to prevent the whole install from breaking
             return Promise.all(
                 urlsToCache.map(url => {
                     return fetch(url).then(response => {
                         if (!response || !response.ok) {
-                            throw new TypeError('Bad response status for ' + url);
+                            console.warn('Failed to pre-cache:', url);
+                            return;
                         }
-                        // store the response in the cache
                         return cache.put(url, response);
-                    }).catch(error => {
-                        console.error('Failed to cache:', url, error);
-                    });
+                    }).catch(err => console.warn('Pre-cache fetch failed:', url));
                 })
             );
         })
@@ -83,51 +84,71 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     const requestUrl = new URL(event.request.url);
-    
-    // Decode the pathname to handle spaces (%20) matching array
     const decodedPath = decodeURI(requestUrl.pathname);
 
-    if (networkFirstFiles.includes(decodedPath)) {
-        // Network-first strategy for specific files
+    // --- 1. SPECIAL HANDLER: Game Assets (ROM/BIOS) ---
+    // This catches Netlify function calls
+    if (decodedPath.includes('/api/serve-game') || decodedPath.includes('.netlify/functions')) {
         event.respondWith(
-            fetch(event.request, { cache: 'reload' })
+            caches.open(APP_CACHE).then(cache => {
+                // strict matching including query params (key=rom)
+                return cache.match(event.request).then(cachedResponse => {
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    
+                    return fetch(event.request).then(networkResponse => {
+                        // Validate response before caching
+                        if (!networkResponse || networkResponse.status !== 200) {
+                            return networkResponse;
+                        }
+                        
+                        const responseToCache = networkResponse.clone();
+                        
+                        cache.put(event.request, responseToCache).catch(err => {
+                             console.warn('Failed to cache game asset:', err);
+                        });
+                        
+                        return networkResponse;
+                    });
+                });
+            })
+        );
+        return;
+    }
+
+    // --- 2. NETWORK FIRST FILES ---
+    if (networkFirstFiles.includes(decodedPath)) {
+        event.respondWith(
+            fetch(event.request)
             .then(networkResponse => {
                 if (networkResponse && networkResponse.ok && event.request.method === 'GET') {
                     const responseClone = networkResponse.clone();
                     caches.open(APP_CACHE).then(cache => {
-                        cache.put(event.request, responseClone).catch(err => {
-                            console.warn('Cache put failed for', event.request.url, err);
-                        });
+                        cache.put(event.request, responseClone);
                     });
                 }
                 return networkResponse;
             })
             .catch(() => {
-                // On failure (offline), try the cache
                 return caches.match(event.request);
             })
         );
-    } else {
-        // Cache-first strategy for all other files
+    } 
+    // --- 3. CACHE FIRST (Default for everything else) ---
+    else {
         event.respondWith(
             caches.match(event.request).then(response => {
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request).then(networkResponse => {
+                return response || fetch(event.request).then(networkResponse => {
+                     // Check if valid to cache (skip non-GET, non-200)
                     if (!networkResponse || networkResponse.status !== 200 || event.request.method !== 'GET') {
                         return networkResponse;
                     }
                     const responseToCache = networkResponse.clone();
                     caches.open(APP_CACHE).then(cache => {
-                        cache.put(event.request, responseToCache).catch(err => {
-                            console.warn('Cache put failed for', event.request.url, err);
-                        });
+                        cache.put(event.request, responseToCache);
                     });
                     return networkResponse;
-                }).catch(() => {
-                    // todo: fallback image/page here if strict offline handling is needed
-                    return caches.match(event.request);
                 });
             })
         );
