@@ -1,4 +1,4 @@
-const APP_CACHE = 'nsk-warrior-cache-v008';
+const APP_CACHE = 'nsk-warrior-cache-v009';
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -86,37 +86,60 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const requestUrl = new URL(event.request.url);
     const decodedPath = decodeURI(requestUrl.pathname);
-
+    
     // --- 1. SPECIAL HANDLER: Game Assets (ROM/BIOS) ---
     if (decodedPath.includes('/api/serve-game') || decodedPath.includes('.netlify/functions')) {
         event.respondWith(
             (async () => {
-                // A. Try Cache First (ignoring Vary header for safety)
                 const cache = await caches.open(APP_CACHE);
-                const cachedResponse = await cache.match(event.request, { ignoreVary: true });
                 
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-                // B. Network Fallback
+                // 1. Try Cache First (Fastest)
+                // 'ignoreVary' fixes the offline "Network Error"
+                const cachedResponse = await cache.match(event.request, { ignoreVary: true });
+                if (cachedResponse) return cachedResponse;
+                
+                // 2. Network Fallback
                 try {
                     const networkResponse = await fetch(event.request);
                     
-                    if (networkResponse.status === 200) {
-                        // C. Create a "Clean" Response for the Cache (Strip 'Vary' header)
-                        const responseToCache = new Response(networkResponse.clone().body, {
-                            status: networkResponse.status,
-                            statusText: networkResponse.statusText,
-                            headers: new Headers(networkResponse.headers)
-                        });
-                        responseToCache.headers.delete('Vary'); 
-                        // Use waitUntil to let the game load while the cache writes to disk in background
-                        event.waitUntil(
-                            cache.put(event.request, responseToCache)
-                                .catch(err => console.warn('Background cache failed:', err))
-                        );
+                    // If the response is not valid (e.g. 404 or 500), return it as-is
+                    if (!networkResponse || networkResponse.status !== 200) {
+                        return networkResponse;
                     }
-                    return networkResponse;
+                    
+                    // 3. The "Tee" Trick
+                    // Instead of cloning (which buffers), we split the stream.
+                    // stream1 = for the browser/game (immediate)
+                    // stream2 = for the cache (background)
+                    const [stream1, stream2] = networkResponse.body.tee();
+                    
+                    // 4. Construct a response for the cache
+                    // We create a new Response using stream2 and the original headers.
+                    // We DELETE the 'Vary' header to prevent future offline issues.
+                    const headers = new Headers(networkResponse.headers);
+                    headers.delete('Vary');
+                    
+                    const responseForCache = new Response(stream2, {
+                        status: networkResponse.status,
+                        statusText: networkResponse.statusText,
+                        headers: headers
+                    });
+                    
+                    // 5. Cache in Background
+                    // event.waitUntil keeps the SW alive without blocking the game response
+                    event.waitUntil(
+                        cache.put(event.request, responseForCache)
+                        .catch(err => console.warn('Cache write failed:', err))
+                    );
+                    
+                    // 6. Return response to Game IMMEDIATELY
+                    // The game reads stream1. It doesn't have to wait for the cache!
+                    return new Response(stream1, {
+                        status: networkResponse.status,
+                        statusText: networkResponse.statusText,
+                        headers: networkResponse.headers
+                    });
+                    
                 } catch (error) {
                     console.error("Fetch failed:", error);
                     throw error;
@@ -125,6 +148,7 @@ self.addEventListener('fetch', event => {
         );
         return;
     }
+    
     // --- 2. NETWORK FIRST FILES ---
     if (networkFirstFiles.includes(decodedPath)) {
         event.respondWith(
@@ -142,7 +166,7 @@ self.addEventListener('fetch', event => {
                 return caches.match(event.request);
             })
         );
-    } 
+    }
     // --- 3. CACHE FIRST (Default for everything else) ---
     else {
         event.respondWith(
