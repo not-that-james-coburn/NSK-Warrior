@@ -56,7 +56,7 @@ const APP_CONFIG = {
       update: "1.9", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests, Assembly door fix, bosses difficulty tweeked up
       versionInfo: true,
       get infoMessage() {
-        return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding 'Square'\n\nUPDATED to v${this.update}`;
+        return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding '\u{25EF}'\n\nUPDATED to v${this.update}`;
       },
     }
   }

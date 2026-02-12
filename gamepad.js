@@ -216,7 +216,7 @@ EJS_VirtualGamepadSettings = [
 },
 {
   type: "button",
-  text: circleSVG,
+  text: squareSVG,
   id: "X",
   location: "right",
   top: 40,
@@ -225,7 +225,7 @@ EJS_VirtualGamepadSettings = [
 },
 {
   type: "button",
-  text: squareSVG,
+  text: circleSVG,
   id: "b",
   location: "right",
   left: 81,

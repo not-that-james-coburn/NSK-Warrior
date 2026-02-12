@@ -86,36 +86,44 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const requestUrl = new URL(event.request.url);
     const decodedPath = decodeURI(requestUrl.pathname);
-    
+
     // --- 1. SPECIAL HANDLER: Game Assets (ROM/BIOS) ---
     if (decodedPath.includes('/api/serve-game') || decodedPath.includes('.netlify/functions')) {
+        console.log(`[SW] Intercepted Game Asset: ${decodedPath}`);
+
         event.respondWith(
             (async () => {
                 const cache = await caches.open(APP_CACHE);
                 
-                // 1. Try Cache First (Fastest)
-                // 'ignoreVary' fixes the offline "Network Error"
+                // STEP A: Try Cache First (Restores Offline Play)
+                // We ignore 'Vary' to ensure offline matching works even if headers changed
                 const cachedResponse = await cache.match(event.request, { ignoreVary: true });
-                if (cachedResponse) return cachedResponse;
                 
-                // 2. Network Fallback
+                if (cachedResponse) {
+                    console.log(`[SW] Found in Cache: ${decodedPath}`);
+                    return cachedResponse;
+                }
+
+                console.log(`[SW] Not in cache. Fetching from network: ${decodedPath}`);
+
+                // STEP B: Network Fallback (First-time Load)
                 try {
                     const networkResponse = await fetch(event.request);
                     
-                    // If the response is not valid (e.g. 404 or 500), return it as-is
+                    // Validate response
                     if (!networkResponse || networkResponse.status !== 200) {
+                        console.warn(`[SW] Network error or 404: ${networkResponse ? networkResponse.status : 'Null'}`);
                         return networkResponse;
                     }
-                    
-                    // 3. The "Tee" Trick
-                    // Instead of cloning (which buffers), we split the stream.
-                    // stream1 = for the browser/game (immediate)
-                    // stream2 = for the cache (background)
+
+                    console.log(`[SW] Network success. Starting 'tee()' stream...`);
+
+                    // STEP C: The "Tee" Strategy (Splits stream to avoid waiting)
+                    // stream1 -> Goes to Browser immediately
+                    // stream2 -> Goes to Cache in background
                     const [stream1, stream2] = networkResponse.body.tee();
-                    
-                    // 4. Construct a response for the cache
-                    // We create a new Response using stream2 and the original headers.
-                    // We DELETE the 'Vary' header to prevent future offline issues.
+
+                    // Create a cache-friendly response (No 'Vary' header)
                     const headers = new Headers(networkResponse.headers);
                     headers.delete('Vary');
                     
@@ -124,62 +132,58 @@ self.addEventListener('fetch', event => {
                         statusText: networkResponse.statusText,
                         headers: headers
                     });
-                    
-                    // 5. Cache in Background
-                    // event.waitUntil keeps the SW alive without blocking the game response
+
+                    // Cache in background
                     event.waitUntil(
                         cache.put(event.request, responseForCache)
-                        .catch(err => console.warn('Cache write failed:', err))
+                            .then(() => console.log(`[SW] Background caching complete: ${decodedPath}`))
+                            .catch(err => console.error(`[SW] Cache write failed:`, err))
                     );
-                    
-                    // 6. Return response to Game IMMEDIATELY
-                    // The game reads stream1. It doesn't have to wait for the cache!
+
+                    // Return stream to game immediately
                     return new Response(stream1, {
                         status: networkResponse.status,
                         statusText: networkResponse.statusText,
                         headers: networkResponse.headers
                     });
-                    
+
                 } catch (error) {
-                    console.error("Fetch failed:", error);
+                    console.error(`[SW] Network Request Failed (Offline?):`, error);
+                    // If we are here, it means we are offline AND it wasn't in the cache.
+                    // We can't do anything else.
                     throw error;
                 }
             })()
         );
         return;
     }
-    
+
     // --- 2. NETWORK FIRST FILES ---
     if (networkFirstFiles.includes(decodedPath)) {
         event.respondWith(
-            fetch(event.request)
+            fetch(event.request, { cache: 'reload' })
             .then(networkResponse => {
                 if (networkResponse && networkResponse.ok && event.request.method === 'GET') {
                     const responseClone = networkResponse.clone();
-                    caches.open(APP_CACHE).then(cache => {
-                        cache.put(event.request, responseClone);
-                    });
+                    caches.open(APP_CACHE).then(cache => cache.put(event.request, responseClone));
                 }
                 return networkResponse;
             })
             .catch(() => {
+                console.log(`[SW] Network failed for ${decodedPath}, checking cache...`);
                 return caches.match(event.request);
             })
         );
-    }
-    // --- 3. CACHE FIRST (Default for everything else) ---
+    } 
+    // --- 3. CACHE FIRST (Default) ---
     else {
         event.respondWith(
             caches.match(event.request).then(response => {
                 return response || fetch(event.request).then(networkResponse => {
-                    
-                    if (!networkResponse || networkResponse.status !== 200 || event.request.method !== 'GET') {
-                        return networkResponse;
+                    if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+                        const responseToCache = networkResponse.clone();
+                        caches.open(APP_CACHE).then(cache => cache.put(event.request, responseToCache));
                     }
-                    const responseToCache = networkResponse.clone();
-                    caches.open(APP_CACHE).then(cache => {
-                        cache.put(event.request, responseToCache);
-                    });
                     return networkResponse;
                 });
             })
