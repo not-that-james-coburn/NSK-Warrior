@@ -1,4 +1,4 @@
-const APP_CACHE = 'nsk-warrior-cache-v013';
+const APP_CACHE = 'nsk-warrior-cache-v014';
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -91,22 +91,31 @@ self.addEventListener('fetch', event => {
     // --- SPECIAL HANDLER: Game Assets ---
     if (decodedPath.includes('/api/serve-game')) {
         
-        event.respondWith(async function() {
+        event.respondWith((async () => {
             const cache = await caches.open(APP_CACHE);
             
-            // A. HANDLE HEAD REQUESTS (Bios check, etc.)
-            // We assume the file is either pre-cached (BIOS) or lazy-cached (ROM)
+            // A. HANDLE HEAD REQUESTS
             if (event.request.method === 'HEAD') {
+                // 1. Try Cache First
                 const cachedResponse = await cache.match(event.request, { ignoreVary: true, ignoreMethod: true });
                 if (cachedResponse) {
+                    console.log(`[SW] serving cached HEAD for: ${decodedPath}`);
                     return new Response(null, {
                         status: 200,
                         statusText: 'OK',
                         headers: cachedResponse.headers
                     });
                 }
-                // If not in cache, we return 404 to indicate "Not Offline Ready Yet"
-                return new Response(null, { status: 404, statusText: 'Not Cached' });
+                
+                // 2. Network Fallback
+                try {
+                    const networkResponse = await fetch(event.request);
+                    return networkResponse;
+                } catch (e) {
+                    // Only return 404 if BOTH cache and network fail (Offline & Not Cached)
+                    console.log(`[SW] Offline and not cached: ${decodedPath}`);
+                    return new Response(null, { status: 404, statusText: 'Offline' });
+                }
             }
             
             // B. HANDLE GET REQUESTS (The ROM download)
@@ -115,13 +124,17 @@ self.addEventListener('fetch', event => {
                 const cachedResponse = await cache.match(event.request, { ignoreVary: true });
                 if (cachedResponse) return cachedResponse;
                 
-                // 2. Fetch from Network (Lazy Load for ROM)
+                console.log(`[SW] Downloading ROM: ${decodedPath}`);
+                
+                // 2. Fetch from Network
                 try {
                     const networkResponse = await fetch(event.request);
                     if (!networkResponse || networkResponse.status !== 200) return networkResponse;
                     
                     // 3. Tee Strategy (Stream to Cache + Game)
                     const [stream1, stream2] = networkResponse.body.tee();
+                    
+                    // Prepare headers for cache (Strip 'Vary')
                     const headers = new Headers(networkResponse.headers);
                     headers.delete('Vary');
                     
@@ -130,18 +143,25 @@ self.addEventListener('fetch', event => {
                         headers: headers
                     });
                     
-                    event.waitUntil(cache.put(event.request, responseForCache));
+                    // Cache in background
+                    event.waitUntil(
+                        cache.put(event.request, responseForCache)
+                        .then(() => console.log(`[SW] Caching complete: ${decodedPath}`))
+                        .catch(err => console.warn(`[SW] Cache failed:`, err))
+                    );
                     
+                    // Return stream to game
                     return new Response(stream1, {
                         status: 200,
                         headers: networkResponse.headers
                     });
+                    
                 } catch (e) {
                     console.error("Fetch failed:", e);
                     throw e;
                 }
             }
-        }());
+        })());
         return;
     }
     
