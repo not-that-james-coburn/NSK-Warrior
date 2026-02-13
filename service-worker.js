@@ -111,12 +111,14 @@ self.addEventListener('fetch', event => {
                     }
                     
                     // If not in cache, fallback to network (will fail if offline)
+                    /*
                     try {
                         return await fetch(event.request);
                     } catch (e) {
                         // If offline and not in cache, return 404 to stop the spinner
                         return new Response(null, { status: 404, statusText: 'Offline' });
                     }
+                    */
                 }
                 
                 // --- HANDLE GET REQUESTS (Standard Logic) ---
