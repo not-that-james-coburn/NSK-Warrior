@@ -1,4 +1,4 @@
-const APP_CACHE = 'nsk-warrior-cache-v011';
+const APP_CACHE = 'nsk-warrior-cache-v012';
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -90,66 +90,81 @@ self.addEventListener('fetch', event => {
     // --- 1. SPECIAL HANDLER: Game Assets (ROM/BIOS) ---
     if (decodedPath.includes('/api/serve-game') || decodedPath.includes('.netlify/functions')) {
         
-        if (event.request.method !== 'GET') {
-            return;
-        }
-        
-        console.log(`[SW] Intercepted Game Asset: ${decodedPath}`);
-        
         event.respondWith(
             (async () => {
                 const cache = await caches.open(APP_CACHE);
                 
-                // STEP A: Try Cache First
-                const cachedResponse = await cache.match(event.request, { ignoreVary: true });
-                if (cachedResponse) {
-                    console.log(`[SW] Found in Cache: ${decodedPath}`);
-                    return cachedResponse;
-                }
-                
-                console.log(`[SW] Not in cache. Fetching: ${decodedPath}`);
-                
-                // STEP B: Network Fallback
-                try {
-                    const networkResponse = await fetch(event.request);
+                // --- HANDLE HEAD REQUESTS (The Fix) ---
+                if (event.request.method === 'HEAD') {
+                    // We can't cache HEAD requests, but we likely have the GET version cached.
+                    // 1. Check if the GET version exists in cache
+                    const cachedResponse = await cache.match(event.request, { ignoreVary: true });
                     
-                    // Validate response (Must be 200 OK)
-                    if (!networkResponse || networkResponse.status !== 200) {
-                        return networkResponse;
+                    if (cachedResponse) {
+                        console.log(`[SW] Mocking HEAD response for: ${decodedPath}`);
+                        // 2. Return a 200 OK with the headers from the cached file, but NO BODY.
+                        return new Response(null, {
+                            status: 200,
+                            statusText: 'OK',
+                            headers: cachedResponse.headers
+                        });
                     }
                     
-                    console.log(`[SW] Network success. Starting 'tee()' stream...`);
+                    // If not in cache, fallback to network (will fail if offline)
+                    try {
+                        return await fetch(event.request);
+                    } catch (e) {
+                        // If offline and not in cache, return 404 to stop the spinner
+                        return new Response(null, { status: 404, statusText: 'Offline' });
+                    }
+                }
+                
+                // --- HANDLE GET REQUESTS (Standard Logic) ---
+                if (event.request.method === 'GET') {
+                    // STEP A: Try Cache First
+                    const cachedResponse = await cache.match(event.request, { ignoreVary: true });
+                    if (cachedResponse) {
+                        console.log(`[SW] Found in Cache: ${decodedPath}`);
+                        return cachedResponse;
+                    }
                     
-                    // STEP C: The "Tee" Strategy
-                    const [stream1, stream2] = networkResponse.body.tee();
+                    console.log(`[SW] Not in cache. Fetching: ${decodedPath}`);
                     
-                    // Clean headers for cache
-                    const headers = new Headers(networkResponse.headers);
-                    headers.delete('Vary');
-                    
-                    const responseForCache = new Response(stream2, {
-                        status: networkResponse.status,
-                        statusText: networkResponse.statusText,
-                        headers: headers
-                    });
-                    
-                    // Cache in background
-                    event.waitUntil(
-                        cache.put(event.request, responseForCache)
-                        .then(() => console.log(`[SW] Cached successfully: ${decodedPath}`))
-                        .catch(err => console.warn(`[SW] Cache write failed:`, err))
-                    );
-                    
-                    // Return stream to game
-                    return new Response(stream1, {
-                        status: networkResponse.status,
-                        statusText: networkResponse.statusText,
-                        headers: networkResponse.headers
-                    });
-                    
-                } catch (error) {
-                    console.error(`[SW] Network Request Failed:`, error);
-                    throw error;
+                    // STEP B: Network Fallback
+                    try {
+                        const networkResponse = await fetch(event.request);
+                        
+                        if (!networkResponse || networkResponse.status !== 200) {
+                            return networkResponse;
+                        }
+                        
+                        // STEP C: The "Tee" Strategy
+                        const [stream1, stream2] = networkResponse.body.tee();
+                        const headers = new Headers(networkResponse.headers);
+                        headers.delete('Vary');
+                        
+                        const responseForCache = new Response(stream2, {
+                            status: networkResponse.status,
+                            statusText: networkResponse.statusText,
+                            headers: headers
+                        });
+                        
+                        event.waitUntil(
+                            cache.put(event.request, responseForCache)
+                            .then(() => console.log(`[SW] Cached successfully: ${decodedPath}`))
+                            .catch(err => console.warn(`[SW] Cache write failed:`, err))
+                        );
+                        
+                        return new Response(stream1, {
+                            status: networkResponse.status,
+                            statusText: networkResponse.statusText,
+                            headers: networkResponse.headers
+                        });
+                        
+                    } catch (error) {
+                        console.error(`[SW] Network Request Failed:`, error);
+                        throw error;
+                    }
                 }
             })()
         );
