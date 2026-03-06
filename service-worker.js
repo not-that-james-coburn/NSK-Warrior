@@ -1,4 +1,4 @@
-const APP_CACHE = 'nsk-warrior-cache-v001';
+const APP_CACHE = 'nsk-warrior-cache-v015';
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -9,10 +9,15 @@ const networkFirstFiles = [
     '/booklet/pages/2.webp',
     '/spa-manager.js',
     '/gamepad.js',
+    '/loading-ring.js',
+    '/images/bearing.gif',
     '/versions/keen-fine/RPG Maker (USA).state'
 ];
+
+// Pre-cache list
 const urlsToCache = [
     '/',
+    '/api/serve-game/scph5501.bin?key=bios',
     '/images/NSK_Warrior_title.mp4',
     '/booklet/booklet.css',
     '/booklet/booklet.js',
@@ -42,26 +47,23 @@ const urlsToCache = [
     '/booklet/pages/17.webp',
     '/booklet/pages/18.webp',
     '/booklet/pages/19.webp',
-    '/booklet/pages/20.webp',
-    'https://nsk-warrior-files.netlify.app/RPG Maker (USA).zip',
-    'https://nsk-warrior-files.netlify.app/scph5501.bin'
+    '/booklet/pages/20.webp'
 ];
 
 self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(APP_CACHE).then(cache => {
+            // Silently fail on individual files to prevent the whole install from breaking
             return Promise.all(
                 urlsToCache.map(url => {
                     return fetch(url).then(response => {
                         if (!response || !response.ok) {
-                            throw new TypeError('Bad response status for ' + url);
+                            console.warn('Failed to pre-cache:', url);
+                            return;
                         }
-                        // store the response in the cache
                         return cache.put(url, response);
-                    }).catch(error => {
-                        console.error('Failed to cache:', url, error);
-                    });
+                    }).catch(err => console.warn('Pre-cache fetch failed:', url));
                 })
             );
         })
@@ -83,51 +85,112 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     const requestUrl = new URL(event.request.url);
-    
-    // Decode the pathname to handle spaces (%20) matching array
     const decodedPath = decodeURI(requestUrl.pathname);
-
+    
+    // --- SPECIAL HANDLER: Game Assets ---
+    if (decodedPath.includes('/api/serve-game')) {
+        
+        event.respondWith((async () => {
+            const cache = await caches.open(APP_CACHE);
+            
+            // A. HANDLE HEAD REQUESTS
+            if (event.request.method === 'HEAD') {
+                // 1. Try Cache First
+                const cachedResponse = await cache.match(event.request, { ignoreVary: true, ignoreMethod: true });
+                if (cachedResponse) {
+                    console.log(`[SW] serving cached HEAD for: ${decodedPath}`);
+                    return new Response(null, {
+                        status: 200,
+                        statusText: 'OK',
+                        headers: cachedResponse.headers
+                    });
+                }
+                
+                // 2. Network Fallback
+                try {
+                    const networkResponse = await fetch(event.request);
+                    return networkResponse;
+                } catch (e) {
+                    // Only return 404 if BOTH cache and network fail (Offline & Not Cached)
+                    console.log(`[SW] Offline and not cached: ${decodedPath}`);
+                    return new Response(null, { status: 404, statusText: 'Offline' });
+                }
+            }
+            
+            // B. HANDLE GET REQUESTS (The ROM download)
+            if (event.request.method === 'GET') {
+                // 1. Check Cache
+                const cachedResponse = await cache.match(event.request, { ignoreVary: true });
+                if (cachedResponse) return cachedResponse;
+                
+                console.log(`[SW] Downloading ROM: ${decodedPath}`);
+                
+                // 2. Fetch from Network
+                try {
+                    const networkResponse = await fetch(event.request);
+                    if (!networkResponse || networkResponse.status !== 200) return networkResponse;
+                    
+                    // 3. Tee Strategy (Stream to Cache + Game)
+                    const [stream1, stream2] = networkResponse.body.tee();
+                    
+                    // Prepare headers for cache (Strip 'Vary')
+                    const headers = new Headers(networkResponse.headers);
+                    headers.delete('Vary');
+                    
+                    const responseForCache = new Response(stream2, {
+                        status: 200,
+                        headers: headers
+                    });
+                    
+                    // Cache in background
+                    event.waitUntil(
+                        cache.put(event.request, responseForCache)
+                        .then(() => console.log(`[SW] Caching complete: ${decodedPath}`))
+                        .catch(err => console.warn(`[SW] Cache failed:`, err))
+                    );
+                    
+                    // Return stream to game
+                    return new Response(stream1, {
+                        status: 200,
+                        headers: networkResponse.headers
+                    });
+                    
+                } catch (e) {
+                    console.error("Fetch failed:", e);
+                    throw e;
+                }
+            }
+        })());
+        return;
+    }
+    
+    // --- 2. NETWORK FIRST FILES ---
     if (networkFirstFiles.includes(decodedPath)) {
-        // Network-first strategy for specific files
         event.respondWith(
             fetch(event.request, { cache: 'reload' })
             .then(networkResponse => {
                 if (networkResponse && networkResponse.ok && event.request.method === 'GET') {
                     const responseClone = networkResponse.clone();
-                    caches.open(APP_CACHE).then(cache => {
-                        cache.put(event.request, responseClone).catch(err => {
-                            console.warn('Cache put failed for', event.request.url, err);
-                        });
-                    });
+                    caches.open(APP_CACHE).then(cache => cache.put(event.request, responseClone));
                 }
                 return networkResponse;
             })
             .catch(() => {
-                // On failure (offline), try the cache
+                console.log(`[SW] Network failed for ${decodedPath}, checking cache...`);
                 return caches.match(event.request);
             })
         );
-    } else {
-        // Cache-first strategy for all other files
+    }
+    // --- 3. CACHE FIRST (Default) ---
+    else {
         event.respondWith(
             caches.match(event.request).then(response => {
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request).then(networkResponse => {
-                    if (!networkResponse || networkResponse.status !== 200 || event.request.method !== 'GET') {
-                        return networkResponse;
+                return response || fetch(event.request).then(networkResponse => {
+                    if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+                        const responseToCache = networkResponse.clone();
+                        caches.open(APP_CACHE).then(cache => cache.put(event.request, responseToCache));
                     }
-                    const responseToCache = networkResponse.clone();
-                    caches.open(APP_CACHE).then(cache => {
-                        cache.put(event.request, responseToCache).catch(err => {
-                            console.warn('Cache put failed for', event.request.url, err);
-                        });
-                    });
                     return networkResponse;
-                }).catch(() => {
-                    // todo: fallback image/page here if strict offline handling is needed
-                    return caches.match(event.request);
                 });
             })
         );

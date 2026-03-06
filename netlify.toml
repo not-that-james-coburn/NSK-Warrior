@@ -1,0 +1,3 @@
+# Allow the Edge Function to access the Blob store
+[[edge-functions]]
+  function = "serve-game"
