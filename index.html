@@ -26,7 +26,7 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      height: 100vh;
+      /*height: 100vh;*/
       width: 100%;
       background: #000;
       color: white;
@@ -173,7 +173,6 @@
       transition: max-height 0.3s ease, opacity 0.3s ease;
       background: rgba(0, 0, 0, 0.9);
       border-radius: 15px;
-      
       pointer-events: auto;
       position: relative;
       /* Stays in flow, pushes buttons down */
@@ -216,7 +215,7 @@
         transform: translateX(-50%);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
       }
-      /* 
+      
       #slots-og {
         left: 80%;
       }
@@ -224,10 +223,10 @@
       #slots-tp {
         left: 0;
       }
-      */
+      
       .save-slot-container.open {
         overflow-y: auto;
-        max-height: 60vh;
+        max-height: 75vh;
       }
       
       #version-list-root {
@@ -238,7 +237,7 @@
         height: auto;
       }
     }
-    /*
+    
     @media (min-width: 1200px) {
       #slots-og {
         left: 50%;
@@ -248,7 +247,7 @@
         left: 50%;
       }
     }
-    */
+    
     .slot-row {
       display: flex;
       justify-content: space-between;
@@ -261,13 +260,14 @@
       border: none;
     }
     
+    /* Unnecessary. New loading graphic 
     .ejs_loading_text {
       top: 50%;
       transform: translateY(-50%);
       font-size: 15px !important;
       white-space: nowrap;
     }
-    
+    */
     .ejs_small_screen #ejs-custom-exit span.ejs_menu_text {
       margin-left: 33%;
     }
@@ -351,6 +351,100 @@
       text-align: left;
     }
     
+    /* Custom loading ring - SCOPED */
+    .loader-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    
+    .loading-img-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0.3;
+    }
+    
+    .loader-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .loader-center {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .percentage-text {
+      margin-top: 45px;
+      color: #39ff14;
+      font-size: 1.7rem;
+      font-weight: bold;
+      text-shadow: 0 0 10px #008f11;
+      opacity: 0.8;
+    }
+    
+    .status-text {
+      position: absolute;
+      top: 30%;
+      color: #888;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: center;
+      width: 80%;
+    }
+    
+    /* SCOPED SVG SELECTORS */
+    .loader-container svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+      position: relative;
+      z-index: 3;
+      overflow: visible;
+    }
+    
+    .loader-container circle {
+      fill: none;
+      stroke-width: 20;
+      stroke-linecap: round;
+      opacity: 0.7;
+    }
+    
+    .loader-container .track {
+      stroke: #111;
+    }
+    
+    .loader-container .progress-ring {
+      stroke: #39ff14;
+      stroke-dasharray: 565.48;
+      stroke-dashoffset: 565.48;
+      transition: stroke-dashoffset 0.1s linear;
+      filter: drop-shadow(0 0 5px #39ff14) drop-shadow(0 0 10px #008f11);
+    }
+    
+    
     /* --- ANIMATIONS --- */
     
     @keyframes slideUpFade {
@@ -398,6 +492,7 @@
   </style>
   
   <script src="/app.js"></script>
+  
 </head>
 
 <body>
@@ -408,16 +503,11 @@
   </video>
   
   <div id="ui-layer">
-    
     <div id="start-menu"></div>
-    
     <div id="version-menu">
       <!--h2 style="margin:0 0 15px 0; text-shadow: 2px 2px 4px black;">SELECT VERSION</h2-->
-      
       <div id="version-list-root"></div>
-      
     </div>
-    
   </div>
   
   <div id="game-container">
@@ -447,6 +537,22 @@
     </div>
   </div>
   
+  <div id="custom-loader-overlay" class="loader-overlay" style="display: none;">
+    <div class="loading-img-container">
+      <img src="/images/bearing.gif" alt="spinning bearing gif">
+    </div>
+    <div class="loader-container">
+      <div class="loader-center">
+        <span class="status-text" id="status-task">Loading</span>
+        <span class="percentage-text" id="loading-text">0%</span>
+      </div>
+      <svg>
+        <circle class="track" cx="100" cy="100" r="90"></circle>
+        <circle class="progress-ring" id="loading-ring" cx="100" cy="100" r="100"></circle>
+      </svg>
+    </div>
+  </div>
+  
   <script src="/db-health-checker.js"></script>
   <script src="/booklet/jquery-3.7.1.min.js"></script>
   <script src="/booklet/turn.min.js"></script>
@@ -454,6 +560,7 @@
   <script src="/booklet/booklet.js"></script>
   <script src="spa-manager.js"></script>
   <script src="gamepad.js"></script>
+  <script src="loading-ring.js"></script>
   
 </body>
 

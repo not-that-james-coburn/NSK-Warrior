@@ -17,6 +17,7 @@ const networkFirstFiles = [
 // Pre-cache list
 const urlsToCache = [
     '/',
+    '/images/bearing.gif',
     '/api/serve-game/scph5501.bin?key=bios',
     '/images/NSK_Warrior_title.mp4',
     '/booklet/booklet.css',

@@ -38,7 +38,7 @@ const APP_CONFIG = {
       loadState: "/versions/keen-fine/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR KF"],
-      versionAlert: false,
+      versionAlert: true,
       alertMessage: "Please wait for next update.\nComing soon!",
       update: "2.0",
       versionInfo: true,
