@@ -43,7 +43,7 @@ const APP_CONFIG = {
       update: "2.2",
       versionInfo: true,
       get infoMessage() {
-        return `UPDATE v${this.update}3-31-26:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n* Cram-a-lot fix\n* Cart rescue fix\n* Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests\n* Boss difficulty tweeked\n* Fixed Filter Room traps\n* Miscellaneous fixes`;
+        return `UPDATE v${this.update}\n3-31-26:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n* Cram-a-lot fix\n* Cart rescue fix\n* Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests\n* Boss difficulty tweeked\n* Fixed Filter Room traps\n* Miscellaneous fixes`;
       },
     },
     'tp': {
