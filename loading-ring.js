@@ -1,4 +1,4 @@
-// Custom loading ring graphic
+// Custom loading ring graphic with two-stage progress tracking
 class BearingLoader {
     constructor(ringId, textId) {
         this.ring = document.getElementById(ringId);
@@ -11,13 +11,56 @@ class BearingLoader {
         // Setup initial SVG states (JS overrides CSS here for dynamic sizing)
         this.ring.style.strokeDasharray = `${this.circumference} ${this.circumference}`;
         this.ring.style.strokeDashoffset = this.circumference;
+        
+        // Two-stage progress tracking
+        this.currentProgress = 0;
+        this.isFinalizingPhase = false;
+        this.finalizationStartTime = null;
+        this.finalizationDuration = 3000; // 3 seconds to go from 99% to 100%
     }
     
     setProgress(percent) {
         const validPercent = Math.min(100, Math.max(0, percent));
-        const offset = this.circumference - (validPercent / 100) * this.circumference;
+        
+        // If we're hitting 99% and haven't entered finalization, trigger it
+        if (validPercent >= 99 && !this.isFinalizingPhase) {
+            this.startFinalizationPhase();
+            return; // Don't update yet, let finalization handle it
+        }
+        
+        // If not in finalization phase, update normally
+        if (!this.isFinalizingPhase) {
+            this.currentProgress = validPercent;
+            this.updateRing(validPercent);
+        }
+    }
+    
+    startFinalizationPhase() {
+        this.isFinalizingPhase = true;
+        this.finalizationStartTime = Date.now();
+        this.animateToCompletion();
+    }
+    
+    animateToCompletion() {
+        const elapsed = Date.now() - this.finalizationStartTime;
+        const progress = Math.min(elapsed / this.finalizationDuration, 1);
+        
+        // Exponential easing for smooth natural progression
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        const displayProgress = 99 + (easedProgress * 1); // 99% -> 100%
+        
+        this.updateRing(displayProgress);
+        
+        // Continue animation until 100%
+        if (progress < 1) {
+            requestAnimationFrame(() => this.animateToCompletion());
+        }
+    }
+    
+    updateRing(percent) {
+        const offset = this.circumference - (percent / 100) * this.circumference;
         this.ring.style.strokeDashoffset = offset;
-        this.text.textContent = `${Math.floor(validPercent)}%`;
+        this.text.textContent = `${Math.floor(percent)}%`;
     }
 }
 
@@ -55,12 +98,22 @@ const callback = function(mutationsList, observer) {
         // Fallback: If stripping leaves nothing (rare), keep raw text
         if (!taskName && rawText.length > 0) taskName = rawText;
         
+        // Add "Finalizing..." message when we hit 99%
+        if (myLoader.isFinalizingPhase && !taskName.includes('Finalizing')) {
+            taskName = 'Finalizing...';
+        }
+        
         if (taskName && taskName !== statusLabel.textContent) {
             statusLabel.textContent = taskName;
         }
     } else {
-        // Game started or text element removed
-        overlay.style.display = 'none';
+        // Game started or text element removed - complete the loading
+        if (!myLoader.isFinalizingPhase) {
+            myLoader.startFinalizationPhase();
+        } else {
+            // Game is actually ready, hide overlay
+            overlay.style.display = 'none';
+        }
     }
 };
 
