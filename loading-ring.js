@@ -16,7 +16,8 @@ class BearingLoader {
         this.currentProgress = 0;
         this.isFinalizingPhase = false;
         this.finalizationStartTime = null;
-        this.finalizationDuration = 3000; // 3 seconds to go from 99% to 100%
+        this.finalizationDuration = 1500; // 1.5 seconds to go from 99% to 100%
+        this.gameStarted = false;
     }
     
     setProgress(percent) {
@@ -54,6 +55,9 @@ class BearingLoader {
         // Continue animation until 100%
         if (progress < 1) {
             requestAnimationFrame(() => this.animateToCompletion());
+        } else {
+            // Animation complete, ready to hide overlay when game is ready
+            this.gameStarted = true;
         }
     }
     
@@ -61,6 +65,10 @@ class BearingLoader {
         const offset = this.circumference - (percent / 100) * this.circumference;
         this.ring.style.strokeDashoffset = offset;
         this.text.textContent = `${Math.floor(percent)}%`;
+    }
+    
+    hideOverlay() {
+        overlay.style.display = 'none';
     }
 }
 
@@ -107,15 +115,21 @@ const callback = function(mutationsList, observer) {
             statusLabel.textContent = taskName;
         }
     } else {
-        // Game started or text element removed - complete the loading
-        if (!myLoader.isFinalizingPhase) {
-            myLoader.startFinalizationPhase();
-        } else {
-            // Game is actually ready, hide overlay
-            overlay.style.display = 'none';
+        // Loading text has disappeared = game is taking over
+        // If we're at 100%, hide the overlay immediately
+        if (myLoader.gameStarted || myLoader.isFinalizingPhase) {
+            myLoader.hideOverlay();
         }
     }
 };
 
 const observer = new MutationObserver(callback);
 observer.observe(targetNode, config);
+
+// Fallback: Hide overlay if it's stuck after 6 seconds total
+setTimeout(() => {
+    if (overlay.style.display === 'flex') {
+        console.warn('[Loader] Fallback: Force-hiding overlay after 6s timeout');
+        myLoader.hideOverlay();
+    }
+}, 6000);
