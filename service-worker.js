@@ -1,4 +1,4 @@
-const APP_CACHE = 'nsk-warrior-cache-v015';
+const APP_CACHE = 'nsk-warrior-cache-v016';
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -143,14 +143,18 @@ self.addEventListener('fetch', event => {
                         headers: headers
                     });
                     
-                    // Cache in background
-                    event.waitUntil(
-                        cache.put(event.request, responseForCache)
-                        .then(() => console.log(`[SW] Caching complete: ${decodedPath}`))
-                        .catch(err => console.warn(`[SW] Cache failed:`, err))
-                    );
+                    // Cache in background WITHOUT blocking the response ***
+                    // This happens AFTER the response is returned to the game
+                    (async () => {
+                        try {
+                            await cache.put(event.request, responseForCache);
+                            console.log(`[SW] Caching complete: ${decodedPath}`);
+                        } catch (err) {
+                            console.warn(`[SW] Cache failed:`, err);
+                        }
+                    })(); // Fire and forget
                     
-                    // Return stream to game
+                    // Return stream to game IMMEDIATELY (doesn't wait for caching)
                     return new Response(stream1, {
                         status: 200,
                         headers: networkResponse.headers
