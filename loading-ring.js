@@ -15,7 +15,6 @@ class BearingLoader {
         // Progress tracking per task
         this.currentProgress = 0;
         this.lastTaskName = '';
-        this.animationFrameId = null;
     }
     
     setProgress(percent) {
@@ -31,8 +30,9 @@ class BearingLoader {
     }
     
     resetForNewTask() {
-        // Reset ring for next task (but don't update immediately)
+        // Reset both counter AND visual ring for next task
         this.currentProgress = 0;
+        this.updateRing(0); // Actually update the visual ring too!
     }
     
     hideOverlay() {
@@ -63,13 +63,13 @@ const callback = function(mutationsList, observer) {
         loadingElem.style.visibility = 'hidden';
         
         // 1. Parse Task Name FIRST
-        let taskName = rawText.replace(/(\d+%|\d+(\.\d+)?MB)$/, '').trim();
+        let taskName = rawText.replace(/(\d+%|\d+(\.\d+)?MB\s*\/\s*\d+(\.\d+)?MB)$/, '').trim();
         if (!taskName && rawText.length > 0) taskName = rawText;
         
         // 2. Detect task changes and reset ring animation
         if (taskName && taskName !== myLoader.lastTaskName) {
             myLoader.lastTaskName = taskName;
-            myLoader.resetForNewTask();
+            myLoader.resetForNewTask(); // Now resets BOTH counter and visual ring
             console.log(`[Loader] New task: ${taskName}`);
             
             // Update task label immediately
@@ -78,11 +78,13 @@ const callback = function(mutationsList, observer) {
         
         // 3. Parse Progress (either percentage or MB)
         let percent = 0;
+        let foundProgress = false;
         
         // Check for percentage format (e.g., "45%")
         const percentMatch = rawText.match(/(\d+)%/);
         if (percentMatch) {
             percent = parseInt(percentMatch[1]);
+            foundProgress = true;
         } else {
             // Check for MB format (e.g., "150.5MB / 40MB")
             const mbMatch = rawText.match(/(\d+(?:\.\d+)?)\s*MB\s*\/\s*(\d+(?:\.\d+)?)\s*MB/);
@@ -91,13 +93,14 @@ const callback = function(mutationsList, observer) {
                 const total = parseFloat(mbMatch[2]);
                 if (total > 0) {
                     percent = Math.round((downloaded / total) * 100);
+                    foundProgress = true;
                     console.log(`[Loader] MB Progress: ${downloaded}MB / ${total}MB = ${percent}%`);
                 }
             }
         }
         
-        // Update ring with calculated percentage - CHANGED: remove the > 0 check
-        if (percentMatch || mbMatch) { // Only skip update if we didn't find ANY progress data
+        // Update ring with calculated percentage
+        if (foundProgress) {
             myLoader.setProgress(percent);
         }
         
@@ -122,6 +125,13 @@ const callback = function(mutationsList, observer) {
                 }
             }, 100);
         }
+    } else {
+        // Loading element disappeared - game is taking over, hide overlay
+        console.log('[Loader] Loading element disappeared, hiding overlay');
+        myLoader.hideOverlay();
+        clearInterval(emulatorReadyCheckInterval);
+        emulatorReadyCheckInterval = null;
+        observer.disconnect();
     }
 };
 
