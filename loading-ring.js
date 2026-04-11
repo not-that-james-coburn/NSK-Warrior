@@ -32,7 +32,7 @@ class BearingLoader {
     resetForNewTask() {
         // Reset both counter AND visual ring for next task
         this.currentProgress = 0;
-        this.updateRing(0); // Actually update the visual ring too!
+        this.updateRing(0);
     }
     
     hideOverlay() {
@@ -59,24 +59,10 @@ const callback = function(mutationsList, observer) {
         // Use textContent to get the loading progress
         const rawText = loadingElem.textContent || "";
         
-        // Hide the default EJS loading text so only our ring shows
-        loadingElem.style.visibility = 'hidden';
+        // Hide the element completely so nothing renders behind
+        loadingElem.style.display = 'none';
         
-        // 1. Parse Task Name FIRST
-        let taskName = rawText.replace(/(\d+%|\d+(\.\d+)?MB\s*\/\s*\d+(\.\d+)?MB)$/, '').trim();
-        if (!taskName && rawText.length > 0) taskName = rawText;
-        
-        // 2. Detect task changes and reset ring animation
-        if (taskName && taskName !== myLoader.lastTaskName) {
-            myLoader.lastTaskName = taskName;
-            myLoader.resetForNewTask(); // Now resets BOTH counter and visual ring
-            console.log(`[Loader] New task: ${taskName}`);
-            
-            // Update task label immediately
-            statusLabel.textContent = taskName;
-        }
-        
-        // 3. Parse Progress (either percentage or MB)
+        // 1. Parse Progress FIRST (either percentage or MB)
         let percent = 0;
         let foundProgress = false;
         
@@ -86,7 +72,7 @@ const callback = function(mutationsList, observer) {
             percent = parseInt(percentMatch[1]);
             foundProgress = true;
         } else {
-            // Check for MB format (e.g., "150.5MB / 40MB")
+            // Check for MB format (e.g., "150.5MB / 40MB") - anywhere in string, not just end
             const mbMatch = rawText.match(/(\d+(?:\.\d+)?)\s*MB\s*\/\s*(\d+(?:\.\d+)?)\s*MB/);
             if (mbMatch) {
                 const downloaded = parseFloat(mbMatch[1]);
@@ -97,6 +83,24 @@ const callback = function(mutationsList, observer) {
                     console.log(`[Loader] MB Progress: ${downloaded}MB / ${total}MB = ${percent}%`);
                 }
             }
+        }
+        
+        // 2. Parse Task Name - remove BOTH percentage and MB patterns
+        let taskName = rawText
+            .replace(/\d+%/, '') // Remove percentage
+            .replace(/\d+(?:\.\d+)?\s*MB\s*\/\s*\d+(?:\.\d+)?\s*MB/, '') // Remove MB progress
+            .trim();
+        
+        if (!taskName && rawText.length > 0) taskName = rawText;
+        
+        // 3. Detect task changes and reset ring animation
+        if (taskName && taskName !== myLoader.lastTaskName) {
+            myLoader.lastTaskName = taskName;
+            myLoader.resetForNewTask();
+            console.log(`[Loader] New task: "${taskName}"`);
+            
+            // Update task label immediately
+            statusLabel.textContent = taskName;
         }
         
         // Update ring with calculated percentage
@@ -129,7 +133,7 @@ const callback = function(mutationsList, observer) {
         // Loading element disappeared - game is taking over, hide overlay
         console.log('[Loader] Loading element disappeared, hiding overlay');
         myLoader.hideOverlay();
-        clearInterval(emulatorReadyCheckInterval);
+        if (emulatorReadyCheckInterval) clearInterval(emulatorReadyCheckInterval);
         emulatorReadyCheckInterval = null;
         observer.disconnect();
     }
