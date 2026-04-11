@@ -76,10 +76,28 @@ const callback = function(mutationsList, observer) {
             statusLabel.textContent = taskName;
         }
         
-        // 3. Parse Percentage and update ring
+        // 3. Parse Progress (either percentage or MB)
+        let percent = 0;
+        
+        // Check for percentage format (e.g., "45%")
         const percentMatch = rawText.match(/(\d+)%/);
         if (percentMatch) {
-            const percent = parseInt(percentMatch[1]);
+            percent = parseInt(percentMatch[1]);
+        } else {
+            // Check for MB format (e.g., "150.5MB / 40MB")
+            const mbMatch = rawText.match(/(\d+(?:\.\d+)?)\s*MB\s*\/\s*(\d+(?:\.\d+)?)\s*MB/);
+            if (mbMatch) {
+                const downloaded = parseFloat(mbMatch[1]);
+                const total = parseFloat(mbMatch[2]);
+                if (total > 0) {
+                    percent = Math.round((downloaded / total) * 100);
+                    console.log(`[Loader] MB Progress: ${downloaded}MB / ${total}MB = ${percent}%`);
+                }
+            }
+        }
+        
+        // Update ring with calculated percentage
+        if (percent > 0) {
             myLoader.setProgress(percent);
         }
         
