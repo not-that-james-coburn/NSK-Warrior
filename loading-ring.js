@@ -96,8 +96,8 @@ const callback = function(mutationsList, observer) {
             }
         }
         
-        // Update ring with calculated percentage
-        if (percent > 0) {
+        // Update ring with calculated percentage - CHANGED: remove the > 0 check
+        if (percentMatch || mbMatch) { // Only skip update if we didn't find ANY progress data
             myLoader.setProgress(percent);
         }
         
