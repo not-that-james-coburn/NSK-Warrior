@@ -31,9 +31,8 @@ class BearingLoader {
     }
     
     resetForNewTask() {
-        // Reset ring for next task
+        // Reset ring for next task (but don't update immediately)
         this.currentProgress = 0;
-        this.updateRing(0);
     }
     
     hideOverlay() {
@@ -63,28 +62,25 @@ const callback = function(mutationsList, observer) {
         // Hide the default EJS loading text so only our ring shows
         loadingElem.style.visibility = 'hidden';
         
-        // 1. Parse Percentage
+        // 1. Parse Task Name FIRST
+        let taskName = rawText.replace(/(\d+%|\d+(\.\d+)?MB)$/, '').trim();
+        if (!taskName && rawText.length > 0) taskName = rawText;
+        
+        // 2. Detect task changes and reset ring animation
+        if (taskName && taskName !== myLoader.lastTaskName) {
+            myLoader.lastTaskName = taskName;
+            myLoader.resetForNewTask();
+            console.log(`[Loader] New task: ${taskName}`);
+            
+            // Update task label immediately
+            statusLabel.textContent = taskName;
+        }
+        
+        // 3. Parse Percentage and update ring
         const percentMatch = rawText.match(/(\d+)%/);
         if (percentMatch) {
             const percent = parseInt(percentMatch[1]);
             myLoader.setProgress(percent);
-        }
-        
-        // 2. Parse Task Name
-        let taskName = rawText.replace(/(\d+%|\d+(\.\d+)?MB)$/, '').trim();
-        if (!taskName && rawText.length > 0) taskName = rawText;
-        
-        // 3. Detect task changes and reset ring animation
-        if (taskName && taskName !== myLoader.lastTaskName) {
-            myLoader.lastTaskName = taskName;
-            myLoader.resetForNewTask();
-            
-            console.log(`[Loader] New task: ${taskName}`);
-        }
-        
-        // Update task label
-        if (taskName && taskName !== statusLabel.textContent) {
-            statusLabel.textContent = taskName;
         }
         
         // Start checking if emulator is ready
