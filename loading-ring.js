@@ -58,6 +58,7 @@ const callback = function(mutationsList, observer) {
         
         // Use textContent to get the loading progress
         const rawText = loadingElem.textContent || "";
+        console.log(`[Loader DEBUG] Raw text: "${rawText}"`);  // ADD THIS
         
         // Hide the element completely so nothing renders behind
         loadingElem.style.display = 'none';
@@ -71,6 +72,7 @@ const callback = function(mutationsList, observer) {
         if (percentMatch) {
             percent = parseInt(percentMatch[1]);
             foundProgress = true;
+            console.log(`[Loader DEBUG] Percentage match: ${percent}%`);  // ADD THIS
         } else {
             // Check for MB format (e.g., "150.5MB / 40MB") - anywhere in string, not just end
             const mbMatch = rawText.match(/(\d+(?:\.\d+)?)\s*MB\s*\/\s*(\d+(?:\.\d+)?)\s*MB/);
@@ -80,16 +82,22 @@ const callback = function(mutationsList, observer) {
                 if (total > 0) {
                     percent = Math.round((downloaded / total) * 100);
                     foundProgress = true;
-                    console.log(`[Loader] MB Progress: ${downloaded}MB / ${total}MB = ${percent}%`);
+                    console.log(`[Loader DEBUG] MB match found: ${downloaded}MB / ${total}MB = ${percent}%`);  // ADD THIS
+                } else {
+                    console.log(`[Loader DEBUG] MB match found but total is 0`);  // ADD THIS
                 }
+            } else {
+                console.log(`[Loader DEBUG] No MB match found`);  // ADD THIS
             }
         }
         
         // 2. Parse Task Name - remove BOTH percentage and MB patterns
         let taskName = rawText
-            .replace(/\d+%/, '') // Remove percentage
-            .replace(/\d+(?:\.\d+)?\s*MB\s*\/\s*\d+(?:\.\d+)?\s*MB/, '') // Remove MB progress
+            .replace(/\d+%/, '')  // Remove percentage
+            .replace(/\d+(?:\.\d+)?\s*MB\s*\/\s*\d+(?:\.\d+)?\s*MB/, '')  // Remove MB progress
             .trim();
+        
+        console.log(`[Loader DEBUG] Task name after cleanup: "${taskName}"`);  // ADD THIS
         
         if (!taskName && rawText.length > 0) taskName = rawText;
         
@@ -105,7 +113,10 @@ const callback = function(mutationsList, observer) {
         
         // Update ring with calculated percentage
         if (foundProgress) {
+            console.log(`[Loader] Updating progress to ${percent}%`);  // ADD THIS
             myLoader.setProgress(percent);
+        } else {
+            console.log(`[Loader] No progress found, not updating ring`);  // ADD THIS
         }
         
         // Start checking if emulator is ready
