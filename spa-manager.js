@@ -42,7 +42,7 @@ const APP_CONFIG = {
       alertMessage: "Please wait for next update.\nComing soon!",
       update: "2.3",
       versionInfo: true,
-      coverImage: "/images/kf-cover.png", // Path to your cover image
+      coverImage: null, //"/images/kf-cover.png",
       get infoMessage() {
         return {
           text: `UPDATE v${this.update}\n4-8-26:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n* Cram-a-lot fix\n* Cart rescue fix\n* Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests\n* Boss difficulty tweeked\n* Fixed Filter Room traps\n* Miscellaneous fixes`,
