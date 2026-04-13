@@ -656,7 +656,7 @@ function showModal(message, type = 'alert') {
         const imgElement = document.createElement('img');
         imgElement.src = imageUrl;
         imgElement.style.cssText = 'max-width: 100%; max-height: 400px; margin: 15px 0; border-radius: 4px;';
-        infoEl.insertBefore(imgElement, infoEl.firstChild);
+        infoEl.appendChild(imgElement);
       }
     }
     

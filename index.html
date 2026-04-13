@@ -303,12 +303,13 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease;
+      padding: 20px 0;
+      overflow-y: auto;
     }
     
     #custom-modal-overlay.visible {
       opacity: 1;
       pointer-events: auto;
-      overflow-y: auto;
     }
     
     #custom-modal,
@@ -318,6 +319,9 @@
       border-radius: 20px;
       padding: 20px;
       width: 300px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
       text-align: center;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
       transform: scale(0.9);
