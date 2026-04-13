@@ -1,4 +1,4 @@
-// Custom loading ring graphic
+// Custom loading ring graphic with task-based progress tracking
 class BearingLoader {
     constructor(ringId, textId) {
         this.ring = document.getElementById(ringId);
@@ -8,16 +8,36 @@ class BearingLoader {
         this.radius = this.ring.r.baseVal.value;
         this.circumference = 2 * Math.PI * this.radius;
         
-        // Setup initial SVG states (JS overrides CSS here for dynamic sizing)
+        // Setup initial SVG states
         this.ring.style.strokeDasharray = `${this.circumference} ${this.circumference}`;
         this.ring.style.strokeDashoffset = this.circumference;
+        
+        // Progress tracking per task
+        this.currentProgress = 0;
+        this.lastTaskName = '';
     }
     
     setProgress(percent) {
         const validPercent = Math.min(100, Math.max(0, percent));
-        const offset = this.circumference - (validPercent / 100) * this.circumference;
+        this.currentProgress = validPercent;
+        this.updateRing(validPercent);
+    }
+    
+    updateRing(percent) {
+        const offset = this.circumference - (percent / 100) * this.circumference;
         this.ring.style.strokeDashoffset = offset;
-        this.text.textContent = `${Math.floor(validPercent)}%`;
+        this.text.textContent = `${Math.floor(percent)}%`;
+    }
+    
+    resetForNewTask() {
+        // Reset both counter AND visual ring for next task
+        this.currentProgress = 0;
+        this.updateRing(0);
+    }
+    
+    hideOverlay() {
+        const overlay = document.getElementById('custom-loader-overlay');
+        overlay.style.display = 'none';
     }
 }
 
@@ -28,41 +48,117 @@ const targetNode = document.querySelector('#game');
 
 const config = { childList: true, subtree: true, characterData: true };
 
+let emulatorReadyCheckInterval = null;
+
 const callback = function(mutationsList, observer) {
-    // Check if the emulator's internal loading text element exists
     const loadingElem = targetNode.querySelector('.ejs_loading_text');
     
     if (loadingElem) {
         overlay.style.display = 'flex';
         
-        // Use textContent! innerText returns empty string if element is hidden/invisible
+        // Use textContent to get the loading progress
         const rawText = loadingElem.textContent || "";
         
-        // Hide the default text so only our ring shows
-        loadingElem.style.visibility = 'hidden';
+        // Hide the element completely so nothing renders behind
+        loadingElem.style.display = 'none';
         
-        // 1. Parse Percentage
+        // 1. Parse Progress (either percentage or MB)
+        let percent = 0;
+        let foundProgress = false;
+        
+        // Check for percentage format (e.g., "45%")
         const percentMatch = rawText.match(/(\d+)%/);
         if (percentMatch) {
-            const percent = parseInt(percentMatch[1]);
+            percent = parseInt(percentMatch[1]);
+            foundProgress = true;
+        } else {
+            // Check for MB / MB format (e.g., "150.5MB / 40MB")
+            const mbRatioMatch = rawText.match(/(\d+(?:\.\d+)?)\s*MB\s*\/\s*(\d+(?:\.\d+)?)\s*MB/);
+            if (mbRatioMatch) {
+                const downloaded = parseFloat(mbRatioMatch[1]);
+                const total = parseFloat(mbRatioMatch[2]);
+                if (total > 0) {
+                    percent = Math.round((downloaded / total) * 100);
+                    foundProgress = true;
+                }
+            } else {
+                // Check for single MB format (e.g., "25.33MB") - assume ~40MB total for game ROM
+                const mbSingleMatch = rawText.match(/(\d+(?:\.\d+)?)\s*MB(?!\s*\/)/);
+                if (mbSingleMatch) {
+                    const downloaded = parseFloat(mbSingleMatch[1]);
+                    // Assume ROM is ~40MB based on your game size
+                    const estimatedTotal = 40;
+                    if (downloaded > 0 && downloaded <= estimatedTotal) {
+                        percent = Math.round((downloaded / estimatedTotal) * 100);
+                        foundProgress = true;
+                    }
+                }
+            }
+        }
+        
+        // 2. Parse Task Name - remove progress indicators
+        let taskName = rawText
+            .replace(/\d+%/, '') // Remove percentage
+            .replace(/\d+(?:\.\d+)?\s*MB\s*\/\s*\d+(?:\.\d+)?\s*MB/, '') // Remove MB ratio
+            .replace(/\d+(?:\.\d+)?\s*MB(?!\s*\/)/, '') // Remove single MB value
+            .trim();
+        
+        if (!taskName && rawText.length > 0) taskName = rawText;
+        
+        // 3. Detect task changes and reset ring animation
+        if (taskName && taskName !== myLoader.lastTaskName) {
+            myLoader.lastTaskName = taskName;
+            myLoader.resetForNewTask();
+            console.log(`[Loader] New task: "${taskName}"`);
+            
+            // Update task label immediately
+            statusLabel.textContent = taskName;
+        }
+        
+        // Update ring with calculated percentage
+        if (foundProgress) {
             myLoader.setProgress(percent);
         }
         
-        // 2. Parse Task Name
-        // Strip out the percentage OR file size (e.g. "45%" or "10.5MB") to get clean text
-        let taskName = rawText.replace(/(\d+%|\d+(\.\d+)?MB)$/, '').trim();
-        
-        // Fallback: If stripping leaves nothing (rare), keep raw text
-        if (!taskName && rawText.length > 0) taskName = rawText;
-        
-        if (taskName && taskName !== statusLabel.textContent) {
-            statusLabel.textContent = taskName;
+        // Start checking if emulator is ready
+        if (!emulatorReadyCheckInterval) {
+            emulatorReadyCheckInterval = setInterval(() => {
+                // Check if the emulator canvas is visible and has rendered content
+                const canvas = targetNode.querySelector('canvas');
+                const emulator = window.EJS_emulator;
+                
+                // Hide loader if:
+                // 1. Canvas exists and is visible (game rendering)
+                // 2. Emulator exists and is playing
+                if ((canvas && canvas.offsetParent !== null) ||
+                    (emulator && emulator.gameManager && !emulator.paused)) {
+                    
+                    console.log('[Loader] Game started, hiding overlay');
+                    myLoader.hideOverlay();
+                    clearInterval(emulatorReadyCheckInterval);
+                    emulatorReadyCheckInterval = null;
+                    observer.disconnect();
+                }
+            }, 100);
         }
     } else {
-        // Game started or text element removed
-        overlay.style.display = 'none';
+        // Loading element disappeared - game is taking over, hide overlay
+        console.log('[Loader] Loading element disappeared, hiding overlay');
+        myLoader.hideOverlay();
+        if (emulatorReadyCheckInterval) clearInterval(emulatorReadyCheckInterval);
+        emulatorReadyCheckInterval = null;
+        observer.disconnect();
     }
 };
 
 const observer = new MutationObserver(callback);
 observer.observe(targetNode, config);
+
+// Fallback: Force hide after 30 seconds in case checks fail
+setTimeout(() => {
+    if (overlay.style.display === 'flex') {
+        console.warn('[Loader] Fallback: Force-hiding overlay after 30s timeout');
+        myLoader.hideOverlay();
+        if (emulatorReadyCheckInterval) clearInterval(emulatorReadyCheckInterval);
+    }
+}, 30000);
