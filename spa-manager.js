@@ -42,8 +42,12 @@ const APP_CONFIG = {
       alertMessage: "Please wait for next update.\nComing soon!",
       update: "2.3",
       versionInfo: true,
+      coverImage: "/images/kf-cover.png", // Path to your cover image
       get infoMessage() {
-        return `UPDATE v${this.update}\n4-8-26:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n* Cram-a-lot fix\n* Cart rescue fix\n* Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests\n* Boss difficulty tweeked\n* Fixed Filter Room traps\n* Miscellaneous fixes`;
+        return {
+          text: `UPDATE v${this.update}\n4-8-26:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n* Cram-a-lot fix\n* Cart rescue fix\n* Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests\n* Boss difficulty tweeked\n* Fixed Filter Room traps\n* Miscellaneous fixes`,
+          image: this.coverImage
+        };
       },
     },
     'tp': {
@@ -602,9 +606,18 @@ function showModal(message, type = 'alert') {
     const infoEl = document.getElementById('info-modal-message');
     const btnsEl = document.getElementById('modal-buttons');
     
+    // Handle both string and object (with text + image) formats
+    let messageText = message;
+    let imageUrl = null;
+    
+    if (typeof message === 'object' && message !== null) {
+      messageText = message.text;
+      imageUrl = message.image;
+    }
+    
     msgEl.style.display = 'block';
     infoEl.style.display = 'none';
-    msgEl.innerText = message;
+    msgEl.innerText = messageText;
     btnsEl.innerHTML = ''; // Clear old buttons
     
     // Create Buttons
@@ -636,7 +649,15 @@ function showModal(message, type = 'alert') {
     if (type === 'info') {
       msgEl.style.display = 'none';
       infoEl.style.display = 'block';
-      infoEl.innerText = message;
+      infoEl.innerText = messageText;
+      
+      // Add image if provided
+      if (imageUrl) {
+        const imgElement = document.createElement('img');
+        imgElement.src = imageUrl;
+        imgElement.style.cssText = 'max-width: 100%; max-height: 400px; margin: 15px 0; border-radius: 4px;';
+        infoEl.insertBefore(imgElement, infoEl.firstChild);
+      }
     }
     
     overlay.classList.add('visible');
@@ -797,7 +818,10 @@ function initVersionMenuStructure() {
       const infoBtn = createSVGBtn(
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"fill="none" stroke="white" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="square"><circle cx="12" cy="12" r="8"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
         '#00000000', async () => {
-          if (config.infoMessage) await showModal(config.infoMessage, 'info');
+          if (config.infoMessage) {
+            const messageData = config.infoMessage; // This now returns { text, image }
+            await showModal(messageData, 'info');
+          }
         });
       btn.style.paddingRight = "0.2em";
       btn.appendChild(infoBtn);
