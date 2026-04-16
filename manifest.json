@@ -3,7 +3,7 @@
     "short_name": "NSK Warrior KF",
     "description": "Fight the war on dirt as an aspiring janitor in a grimy factory in this comical, survival horror RPG game.",
     "start_url": "/",
-    "display": "fullscreen",
+    "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#000000",
     "orientation": "any",
