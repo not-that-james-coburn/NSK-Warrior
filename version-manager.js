@@ -16,7 +16,7 @@ const APP_CONFIG = {
       loadState: "/versions/original/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR", "NSK_WARRIOR_OG", "NSK_WARRIOR_OG_1", "NSK_WARRIOR_OG_2", "NSK_WARRIOR_OG_3", "NSK_WARRIOR_OG_4"],
-      versionInfo: false,
+      versionInfo: true,
       get infoMessage() {
         return "Original Version (2008)\n\nUnfiltered, unmodified.\nAll the nuances, quirks and occasional bugs of the first release.";
       },
@@ -27,7 +27,7 @@ const APP_CONFIG = {
       loadState: "/versions/v1.1/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR v1.1", "NSK_WARRIOR_v1.1", "NSK_WARRIOR_v1.1_1", "NSK_WARRIOR_v1.1_2", "NSK_WARRIOR_v1.1_3", "NSK_WARRIOR_v1.1_4"],
-      versionInfo: false,
+      versionInfo: true,
       get infoMessage() {
         return "Version 1.1 (2024)\n\nSame base game with a few additions. Notably:\n\n*Bug fixes\n*New Skills system";
       },
@@ -45,7 +45,7 @@ const APP_CONFIG = {
       coverImage: null, //"/images/kf-cover.png",
       get infoMessage() {
         return {
-          text: `UPDATE v${this.update}\n4-8-26:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n* Cram-a-lot fix\n* Cart rescue fix\n* Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests\n* Boss difficulty tweeked\n* Fixed Filter Room traps\n* Miscellaneous fixes`,
+          text: "Keen-Fine Edition (2026)\n\nSame base game with much additional content including:\n\n*Modified progression (less linear)\n*MANY new items and secrets\n*Upgradable weapons\n*Refreshed levels and quests\n*Randomized treasures",
           image: this.coverImage
         };
       },
