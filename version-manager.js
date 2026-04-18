@@ -1,5 +1,5 @@
 /**
- * SPA MANAGER - NSK WARRIOR (Integrated)
+ * VERSION MANAGER - NSK WARRIOR
  */
 
 // --- 1. CONFIGURATION ---
@@ -16,7 +16,7 @@ const APP_CONFIG = {
       loadState: "/versions/original/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR", "NSK_WARRIOR_OG", "NSK_WARRIOR_OG_1", "NSK_WARRIOR_OG_2", "NSK_WARRIOR_OG_3", "NSK_WARRIOR_OG_4"],
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return "Original Version (2008)\n\nUnfiltered, unmodified.\nAll the nuances, quirks and occasional bugs of the first release.";
       },
@@ -27,7 +27,7 @@ const APP_CONFIG = {
       loadState: "/versions/v1.1/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR v1.1", "NSK_WARRIOR_v1.1", "NSK_WARRIOR_v1.1_1", "NSK_WARRIOR_v1.1_2", "NSK_WARRIOR_v1.1_3", "NSK_WARRIOR_v1.1_4"],
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return "Version 1.1 (2024)\n\nSame base game with a few additions. Notably:\n\n*Bug fixes\n*New Skills system";
       },
@@ -40,12 +40,31 @@ const APP_CONFIG = {
       legacyKeys: ["NSK WARRIOR KF"],
       versionAlert: true,
       alertMessage: "Please wait for next update.\nComing soon!",
-      update: "2.0",
+      update: "2.3",
       versionInfo: true,
+      coverImage: null, //"/images/kf-cover.png",
       get infoMessage() {
-        return "Keen-Fine Edition (2026)\n\nSame base game with much additional content including:\n\n*Modified progression (less linear)\n*MANY new items and secrets\n*Upgradable weapons\n*Refreshed levels and quests\n*Randomized treasures";
+        return {
+          text: `UPDATE v${this.update}\n4-8-26:\n\n***CRITICAL BUG FIXES***\n\n* Restored Assembly cinematic\n* Cram-a-lot fix\n* Cart rescue fix\n* Heat-Treat bridge switch\n\nADDITIONAL UPDATES:\n\n* Filter Room refresh\n* Improved Assembly side quests\n* Boss difficulty tweeked\n* Fixed Filter Room traps\n* Miscellaneous fixes`,
+          image: this.coverImage
+        };
       },
     },
+    /* 
+    'tp': {
+      label: "Test Play",
+      prefix: "TEST_PLAY",
+      loadState: "/versions/test-play/RPG Maker (USA).state",
+      slots: 8,
+      versionAlert: false,
+      alertMessage: "Please wait for next update.\nComing soon!",
+      update: "2.3", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests, Assembly door fix, bosses difficulty tweeked up
+      versionInfo: true,
+      get infoMessage() {
+        return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding '\u{25EF}'\n\nUPDATED to v${this.update}`;
+      },
+    }
+    */
   }
 };
 
@@ -589,9 +608,18 @@ function showModal(message, type = 'alert') {
     const infoEl = document.getElementById('info-modal-message');
     const btnsEl = document.getElementById('modal-buttons');
     
+    // Handle both string and object (with text + image) formats
+    let messageText = message;
+    let imageUrl = null;
+    
+    if (typeof message === 'object' && message !== null) {
+      messageText = message.text;
+      imageUrl = message.image;
+    }
+    
     msgEl.style.display = 'block';
     infoEl.style.display = 'none';
-    msgEl.innerText = message;
+    msgEl.innerText = messageText;
     btnsEl.innerHTML = ''; // Clear old buttons
     
     // Create Buttons
@@ -623,7 +651,15 @@ function showModal(message, type = 'alert') {
     if (type === 'info') {
       msgEl.style.display = 'none';
       infoEl.style.display = 'block';
-      infoEl.innerText = message;
+      infoEl.innerText = messageText;
+      
+      // Add image if provided
+      if (imageUrl) {
+        const imgElement = document.createElement('img');
+        imgElement.src = imageUrl;
+        imgElement.style.cssText = 'max-width: 100%; max-height: 400px; margin: 15px 0; border-radius: 4px;';
+        infoEl.appendChild(imgElement);
+      }
     }
     
     overlay.classList.add('visible');
@@ -784,7 +820,10 @@ function initVersionMenuStructure() {
       const infoBtn = createSVGBtn(
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"fill="none" stroke="white" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="square"><circle cx="12" cy="12" r="8"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
         '#00000000', async () => {
-          if (config.infoMessage) await showModal(config.infoMessage, 'info');
+          if (config.infoMessage) {
+            const messageData = config.infoMessage; // returns { text, image }
+            await showModal(messageData, 'info');
+          }
         });
       btn.style.paddingRight = "0.2em";
       btn.appendChild(infoBtn);
@@ -1425,7 +1464,7 @@ async function launchGame(verId, slotNum) {
   window.EJS_biosUrl = APP_CONFIG.biosUrl;
   window.EJS_pathtodata = APP_CONFIG.ejsPath;
   window.EJS_startOnLoaded = true;
-  window.EJS_color = "#800000";
+  window.EJS_color = "#000000";
   window.EJS_backgroundColor = "#000000";
   window.EJS_threads = (typeof SharedArrayBuffer !== 'undefined' && typeof Atomics !== 'undefined');
   console.log("Threads enabled?", EJS_threads);
