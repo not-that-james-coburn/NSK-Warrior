@@ -7,7 +7,7 @@ const networkFirstFiles = [
     '/booklet/booklet.css',
     '/booklet/booklet.js',
     '/booklet/pages/2.webp',
-    '/spa-manager.js',
+    '/version-manager.js',
     '/gamepad.js',
     '/loading-ring.js',
     '/images/bearing.gif',
