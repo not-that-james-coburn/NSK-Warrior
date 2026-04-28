@@ -819,7 +819,7 @@ function initVersionMenuStructure() {
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"fill="none" stroke="white" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="square"><circle cx="12" cy="12" r="8"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
         '#00000000', async () => {
           if (config.infoMessage) {
-            const messageData = config.infoMessage; // This now returns { text, image }
+            const messageData = config.infoMessage; // returns { text, image }
             await showModal(messageData, 'info');
           }
         });
