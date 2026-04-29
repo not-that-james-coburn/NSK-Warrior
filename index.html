@@ -30,6 +30,14 @@
       font-family: system-ui, sans-serif;
     }
     
+    #envelope {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    
     .bg-layer {
       position: absolute;
       min-height: 100%;
@@ -507,7 +515,7 @@
 </head>
 
 <body>
-  
+<div id="envelope">
   <video autoplay loop muted playsinline class="bg-layer" id="bg-img">
     <source src="/images/NSK_Warrior_title.mp4" type="video/mp4">
     <img src="images/title.avif" class="bg-layer" id="bg-img">
@@ -572,7 +580,7 @@
   <script src="spa-manager.js"></script>
   <script src="gamepad.js"></script>
   <script src="loading-ring.js"></script>
-  
+</div>  
 </body>
 
 </html>
