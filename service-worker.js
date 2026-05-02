@@ -22,7 +22,6 @@ const urlsToCache = [
     '/images/NSK_Warrior_title.mp4',
     '/booklet/booklet.css',
     '/booklet/booklet.js',
-    '/booklet/jquery-3.7.1.min.js',
     '/booklet/panzoom.min.js',
     '/booklet/turn.min.js',
     '/booklet/manual_icon.webp',
