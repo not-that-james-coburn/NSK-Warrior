@@ -1,14 +1,16 @@
+let bookTurn;
+const book = document.getElementById('book');
 for (let i = 1; i <= 20; i++) {
     if (i % 2 === 1) {
         // Odd pages (right)
-        $('#book').append(`
+        book.insertAdjacentHTML('beforeend', `
             <div id="page" class="right">
                 <img src="/booklet/pages/${i}.webp" alt="Page ${i}">
             </div>
         `);
     } else {
         // Even pages (left)               
-        $('#book').append(`
+        book.insertAdjacentHTML('beforeend', `
             <div id="page" class="left">
                 <img src="/booklet/pages/${i}.webp" alt="Page ${i}">
             </div>
@@ -38,7 +40,7 @@ function attachPageTurnListeners() {
             if (!isTurning && timeDiff < 200) {
                 isTurning = true;
                 const direction = element.classList.contains("left") ? "previous" : "next";
-                $("#book").turn(direction);
+                bookTurn.turn(direction);
                 // One page at a time
                 e.stopImmediatePropagation();
                 // Manually trigger pointerup on the book (parent element) to cancel panning
@@ -63,28 +65,26 @@ function attachPageTurnListeners() {
     });
 }
 
-// Attach listeners initially
-attachPageTurnListeners();
-
-// Re-attach listeners after each page turn
-$('#book').on('turning', () => {
-    setTimeout(attachPageTurnListeners, 0);
-});
-
 document.addEventListener('DOMContentLoaded', (event) => {
     const book = document.getElementById('book');
     // Initialize turn.js after all pages are added
     // For firefox moved this after dom content loaded
-    $('#book').turn({
+    bookTurn = createTurn(book, {
         autoCenter: true,
         when: {
-            turning: function(e, page, view) {
+            turning: function() {
                 var audio = new Audio('/booklet/sounds/page_turn.mp3');
                 audio.play();
             }
         }
     });
-    
+
+    // Attach listeners initially and after each page turn
+    attachPageTurnListeners();
+    bookTurn.on('turning', () => {
+        setTimeout(attachPageTurnListeners, 0);
+    });
+
     // Initialize Panzoom for game booklet
     const panzoom = Panzoom(book, {
         maxScale: 2.5,
