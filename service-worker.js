@@ -4,6 +4,7 @@ const networkFirstFiles = [
     '/index.html',
     '/app.js',
     '/manifest.json',
+    '/booklet/booklet.html',
     '/booklet/booklet.css',
     '/booklet/booklet.js',
     '/booklet/pages/2.webp',

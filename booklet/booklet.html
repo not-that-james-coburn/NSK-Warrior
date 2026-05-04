@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- Added viewport tag to prevent desktop display on mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/booklet/booklet.css">
+  <style type="text/css">
+        body, html {
+            margin: 0; /* Prevents scrollbars */
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            color: white;
+            touch-action: none;
+            overflow: hidden; /* For full-screen game */
+        }
+  </style>
+</head>
+<body>
+    <div id="book-container">
+    <div id="book"></div>
+    <div class="button-wrapper" id="button-wrapper">
+      <input type="checkbox" id="toggleButton" class="toggle-button">
+      <label for="toggleButton">
+        <img src="manual_icon.webp" width="40" height="40" alt="Game Booklet">
+      </label>
+    </div>
+  </div>
+  
+  <audio id="flip" src="booklet/sounds/page_turn.mp3"></audio>
+  <audio id="slide1" src="booklet/sounds/slide_in.mp3"></audio>
+  <audio id="slide2" src="booklet/sounds/slide_out.mp3"></audio>
+  <div id="blurBackground" class="blurred-background" style="display: none;"></div>
+  
+  <script src="/booklet/jquery-3.7.1.min.js"></script>
+  <script src="/booklet/turn.min.js"></script>
+  <script src="/booklet/panzoom.min.js"></script>
+  <script src="/booklet/booklet.js"></script>
+</body>
+</html>
