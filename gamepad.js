@@ -29,11 +29,11 @@ const crossSVG = `
 // Define the initialization function globally
 window.initVirtualGamepad = function() {
   console.log("Initializing Virtual Gamepad Customizations...");
-
+  
   function applyCustomStyles() {
     // Prevent adding style block multiple times
     if (document.getElementById('custom-gamepad-styles')) return;
-
+    
     const style = document.createElement('style');
     style.id = 'custom-gamepad-styles';
     style.innerHTML = `
@@ -94,7 +94,7 @@ window.initVirtualGamepad = function() {
     
     // FIX: Check if elements exist BEFORE trying to access .style
     if (!virtualGamepadLeft || !virtualGamepadRight) return;
-
+    
     // Load positions from local storage
     if (localStorage.getItem('virtualGamepadLeft')) {
       const leftPosition = JSON.parse(localStorage.getItem('virtualGamepadLeft'));
@@ -117,6 +117,8 @@ window.initVirtualGamepad = function() {
     let startX, startY, initialPercentX, initialPercentY, longPressTimer;
     
     element.addEventListener('touchstart', (e) => {
+      if (e.target !== element) return;
+      
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
         isDragging = true;
@@ -136,6 +138,9 @@ window.initVirtualGamepad = function() {
     
     element.addEventListener('touchmove', (e) => {
       if (isDragging) {
+        // Prevent default scrolling/zooming while dragging
+        e.preventDefault();
+        
         const touch = e.touches[0];
         const deltaX = touch.clientX - startX;
         const deltaY = touch.clientY - startY;
@@ -149,6 +154,7 @@ window.initVirtualGamepad = function() {
         
         newPercentX = Math.max(0, Math.min(newPercentX, 100 - (element.clientWidth / windowWidth) * 100));
         newPercentY = Math.max(0, Math.min(newPercentY, 100 - (element.clientHeight / windowHeight) * 100));
+        
         if (horizontalProperty === 'left') {
           element.style.left = `${newPercentX}%`;
         } else {
@@ -156,12 +162,12 @@ window.initVirtualGamepad = function() {
         }
         element.style.bottom = `${newPercentY}%`;
       } else {
-        clearTimeout(longPressTimer); 
+        clearTimeout(longPressTimer);
       }
     });
     
     element.addEventListener('touchend', (e) => {
-      clearTimeout(longPressTimer); 
+      clearTimeout(longPressTimer);
       if (isDragging) {
         isDragging = false;
         element.style.cursor = 'grab';
@@ -182,11 +188,6 @@ window.initVirtualGamepad = function() {
         element.style.cursor = 'grab';
       }
     });
-    
-    element.addEventListener('touchstart', (e) => e.stopImmediatePropagation());
-    element.addEventListener('touchmove', (e) => e.stopImmediatePropagation());
-    element.addEventListener('touchend', (e) => e.stopImmediatePropagation());
-    element.addEventListener('touchcancel', (e) => e.stopImmediatePropagation());
   }
   
   // Use MutationObserver to wait for EJS to inject the gamepad elements
