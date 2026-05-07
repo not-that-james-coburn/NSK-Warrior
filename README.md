@@ -38,12 +38,12 @@ The game is also available at [itch.io](https://imaginary-monkey.itch.io/nsk-war
 - **Playable in Browser:**  Enjoy the game directly in your web browser.
   
 - **PWA Support:**  Install as a Progressive Web App for a native app-like experience.
+
+- **Version Manager:**  Select which game version to play and choose a save slot. Import, Share or Delete saves. Uses emulator save states.
   
 - **Original Game Booklet:**  While playing, flip through maps and game details of the original booklet that accompanied the game.
 
 ![demo of booklet](images/booklet.avif)
-
-- **Version Manager:**  Select which game version to play and choose a save slot. Import, Share or Delete saves. Uses emulator save states.
 
 ## Booklet
 To add a game booklet to your project:
