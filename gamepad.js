@@ -31,7 +31,6 @@ window.initVirtualGamepad = function() {
   console.log("Initializing Virtual Gamepad Customizations...");
   
   function applyCustomStyles() {
-    // Prevent adding style block multiple times
     if (document.getElementById('custom-gamepad-styles')) return;
     
     const style = document.createElement('style');
@@ -47,6 +46,13 @@ window.initVirtualGamepad = function() {
                 height: 165px;
                 cursor: grab;
                 touch-action: none; 
+                
+                /* Start at normal size (1), scale dynamically based on the longest edge, but never get bigger than 2x size */
+                transform: scale(1.16);
+
+                /* Set origin so it scales upward and outward predictably */
+                transform-origin: bottom center;
+                
             }
             .ejs_dpad_main {
               position: absolute;
@@ -82,6 +88,7 @@ window.initVirtualGamepad = function() {
         `;
     document.head.appendChild(style);
   }
+  
   
   // Disable default actions
   document.addEventListener('contextmenu', (e) => e.preventDefault());
