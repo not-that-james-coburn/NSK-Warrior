@@ -45,7 +45,7 @@ const APP_CONFIG = {
       coverImage: null, //"/images/kf-cover.png",
       get infoMessage() {
         return {
-          text: "Keen-Fine Edition (2026)\n\nSame base game with much additional content including:\n\n*Modified progression (less linear)\n*MANY new items and secrets\n*Upgradable weapons\n*Refreshed levels and quests\n*Randomized treasures",
+          text: "Keen-Fine Edition (2026)\n\nSame base game + Version 1.1 updates + much additional content including:\n\n*Modified progression (less linear)\n*MANY new items and secrets\n*Upgradable weapons\n*Refreshed levels and quests\n*Randomized treasures",
           image: this.coverImage
         };
       },
