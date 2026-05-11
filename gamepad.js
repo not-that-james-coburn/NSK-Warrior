@@ -95,6 +95,8 @@ window.initVirtualGamepad = function() {
   
   // Disable default actions
   document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('touchstart', (e) => e.preventDefault());
+  document.addEventListener('pointerdown', (e) => e.preventDefault());
     
   
   function applyStyles() {
