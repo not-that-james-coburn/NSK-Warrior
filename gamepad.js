@@ -84,6 +84,11 @@ window.initVirtualGamepad = function() {
             }
             .ejs_virtualGamepad_left *, .ejs_virtualGamepad_right * {
                 pointer-events: auto; 
+                /* force all child buttons to ignore native UI behaviors */
+                -webkit-touch-callout: none !important;
+                -webkit-user-select: none !important;
+                user-select: none !important;
+                touch-action: none !important;
             }
             .ejs_virtualGamepad_button_down {
                 border-radius: 50%;
