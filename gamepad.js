@@ -98,12 +98,6 @@ window.initVirtualGamepad = function() {
   }
   
   
-  // Disable default actions
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
-  document.addEventListener('touchstart', (e) => e.preventDefault());
-  document.addEventListener('pointerdown', (e) => e.preventDefault());
-    
-  
   function applyStyles() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
     const virtualGamepadRight = document.querySelector('.ejs_virtualGamepad_right');
@@ -131,9 +125,15 @@ window.initVirtualGamepad = function() {
   function makeDraggable(element, horizontalProperty) {
     let isDragging = false;
     let startX, startY, initialPercentX, initialPercentY, longPressTimer;
-    
+    element.addEventListener('pointerdown', (e) => e.stopPropagation());
     element.addEventListener('touchstart', (e) => {
-      if (e.target !== element) return;
+      e.stopPropagation();
+      
+      // Kill the browser's native long-press haptic bump
+      if (e.cancelable) {
+        e.preventDefault();
+        if (e.target !== element) return;
+      }
       
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
@@ -150,7 +150,7 @@ window.initVirtualGamepad = function() {
         initialPercentY = ((windowHeight - rect.bottom - 50) / windowHeight) * 100;
         element.style.cursor = 'grabbing';
       }, 400);
-    });
+    }, { passive: false });
     
     element.addEventListener('touchmove', (e) => {
       if (isDragging) {
