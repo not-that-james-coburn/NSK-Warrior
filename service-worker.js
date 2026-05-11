@@ -1,4 +1,4 @@
-const APP_CACHE = 'nsk-warrior-cache-v016';
+const APP_CACHE = 'nsk-warrior-cache-v017';
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -17,9 +17,19 @@ const networkFirstFiles = [
 // Pre-cache list
 const urlsToCache = [
     '/',
+    '/index.html',
+    '/app.js',
+    '/manifest.json',
+    '/version-manager.js',
+    '/gamepad.js',
+    '/loading-ring.js',
     '/images/bearing.gif',
     '/api/serve-game/scph5501.bin?key=bios',
     '/images/NSK_Warrior_title.mp4',
+    '/images/title.avif',
+    '/images/save-placeholder.png',
+    '/favicon.ico',
+    '/db-health-checker.js',
     '/booklet/booklet.css',
     '/booklet/booklet.js',
     '/booklet/jquery-3.7.1.min.js',
@@ -51,6 +61,35 @@ const urlsToCache = [
     '/booklet/pages/20.webp'
 ];
 
+const offlineReadyFiles = [
+    ...urlsToCache,
+    '/api/serve-game/RPG_Maker_USA.zip?key=rom'
+];
+
+async function areOfflineReadyFilesCached() {
+    const cache = await caches.open(APP_CACHE);
+    const matches = await Promise.all(
+        offlineReadyFiles.map(url => cache.match(url, { ignoreVary: true }))
+    );
+    return matches.every(Boolean);
+}
+
+async function notifyClientsWhenOfflineReady() {
+    if (!(await areOfflineReadyFilesCached())) return;
+
+    const clients = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+    });
+
+    clients.forEach(client => {
+        client.postMessage({
+            type: 'OFFLINE_READY',
+            cacheName: APP_CACHE
+        });
+    });
+}
+
 self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
@@ -80,8 +119,14 @@ self.addEventListener('activate', event => {
             );
         }).then(() => {
             return self.clients.claim();
-        })
+        }).then(() => notifyClientsWhenOfflineReady())
     );
+});
+
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'CHECK_OFFLINE_READY') {
+        notifyClientsWhenOfflineReady();
+    }
 });
 
 self.addEventListener('fetch', event => {
@@ -149,6 +194,7 @@ self.addEventListener('fetch', event => {
                         try {
                             await cache.put(event.request, responseForCache);
                             console.log(`[SW] Caching complete: ${decodedPath}`);
+                            await notifyClientsWhenOfflineReady();
                         } catch (err) {
                             console.warn(`[SW] Cache failed:`, err);
                         }
@@ -176,7 +222,7 @@ self.addEventListener('fetch', event => {
             .then(networkResponse => {
                 if (networkResponse && networkResponse.ok && event.request.method === 'GET') {
                     const responseClone = networkResponse.clone();
-                    caches.open(APP_CACHE).then(cache => cache.put(event.request, responseClone));
+                    caches.open(APP_CACHE).then(cache => cache.put(event.request, responseClone)).then(() => notifyClientsWhenOfflineReady());
                 }
                 return networkResponse;
             })
@@ -193,7 +239,7 @@ self.addEventListener('fetch', event => {
                 return response || fetch(event.request).then(networkResponse => {
                     if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
                         const responseToCache = networkResponse.clone();
-                        caches.open(APP_CACHE).then(cache => cache.put(event.request, responseToCache));
+                        caches.open(APP_CACHE).then(cache => cache.put(event.request, responseToCache)).then(() => notifyClientsWhenOfflineReady());
                     }
                     return networkResponse;
                 });
