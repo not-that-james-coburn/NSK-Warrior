@@ -98,6 +98,12 @@ window.initVirtualGamepad = function() {
   }
   
   
+  // Disable default actions
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('touchstart', (e) => e.preventDefault());
+  document.addEventListener('pointerdown', (e) => e.preventDefault());
+  
+  
   function applyStyles() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
     const virtualGamepadRight = document.querySelector('.ejs_virtualGamepad_right');
