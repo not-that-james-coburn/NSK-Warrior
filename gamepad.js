@@ -47,8 +47,9 @@ window.initVirtualGamepad = function() {
                 cursor: grab;
                 touch-action: none; 
                 
-                /* scale up gamepads slightly and scale them upward and outward */
+                /* scale up gamepad slightly */
                 transform: scale(1.16);
+                /* Set origin so it scales upward and outward predictably */
                 transform-origin: bottom center;
                 
             }
@@ -93,7 +94,6 @@ window.initVirtualGamepad = function() {
   document.addEventListener('touchstart', (e) => e.preventDefault());
   document.addEventListener('pointerdown', (e) => e.preventDefault());
   
-  
   function applyStyles() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
     const virtualGamepadRight = document.querySelector('.ejs_virtualGamepad_right');
@@ -121,7 +121,10 @@ window.initVirtualGamepad = function() {
   function makeDraggable(element, horizontalProperty) {
     let isDragging = false;
     let startX, startY, initialPercentX, initialPercentY, longPressTimer;
+    
     element.addEventListener('touchstart', (e) => {
+      if (e.target !== element) return;
+      
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
         isDragging = true;
