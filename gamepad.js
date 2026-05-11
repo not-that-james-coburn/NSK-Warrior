@@ -47,11 +47,6 @@ window.initVirtualGamepad = function() {
                 cursor: grab;
                 touch-action: none; 
                 
-                /* Disables native OS popups and text selection */
-                -webkit-touch-callout: none; 
-                -webkit-user-select: none; 
-                user-select: none;
-                
                 /* scale up gamepads slightly and scale them upward and outward */
                 transform: scale(1.16);
                 transform-origin: bottom center;
