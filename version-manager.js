@@ -50,7 +50,6 @@ const APP_CONFIG = {
         };
       },
     },
-    /* 
     'tp': {
       label: "Test Play",
       prefix: "TEST_PLAY",
@@ -64,7 +63,6 @@ const APP_CONFIG = {
         return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding '\u{25EF}'\n\nUPDATED to v${this.update}`;
       },
     }
-    */
   }
 };
 
