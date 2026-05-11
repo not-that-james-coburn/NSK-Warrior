@@ -135,11 +135,7 @@ window.initVirtualGamepad = function() {
     element.addEventListener('touchstart', (e) => {
       e.stopPropagation();
       
-      // Kill the browser's native long-press haptic bump
-      if (e.cancelable) {
-        e.preventDefault();
-        if (e.target !== element) return;
-      }
+
       
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
