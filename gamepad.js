@@ -152,7 +152,7 @@ window.initVirtualGamepad = function() {
         initialPercentY = ((windowHeight - rect.bottom - 50) / windowHeight) * 100;
         element.style.cursor = 'grabbing';
       }, 400);
-    }, { passive: false });
+    });
     
     element.addEventListener('touchmove', (e) => {
       if (isDragging) {
