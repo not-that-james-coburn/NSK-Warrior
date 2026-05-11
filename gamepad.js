@@ -126,12 +126,7 @@ window.initVirtualGamepad = function() {
   function makeDraggable(element, horizontalProperty) {
     let isDragging = false;
     let startX, startY, initialPercentX, initialPercentY, longPressTimer;
-    element.addEventListener('pointerdown', (e) => e.stopPropagation());
     element.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-      
-
-      
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
         isDragging = true;
