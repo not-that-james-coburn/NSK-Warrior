@@ -47,10 +47,13 @@ window.initVirtualGamepad = function() {
                 cursor: grab;
                 touch-action: none; 
                 
-                /* Start at normal size (1), scale dynamically based on the longest edge, but never get bigger than 2x size */
+                /* Disables native OS popups and text selection */
+                -webkit-touch-callout: none; 
+                -webkit-user-select: none; 
+                user-select: none;
+                
+                /* scale up gamepads slightly and scale them upward and outward */
                 transform: scale(1.16);
-
-                /* Set origin so it scales upward and outward predictably */
                 transform-origin: bottom center;
                 
             }
@@ -92,8 +95,9 @@ window.initVirtualGamepad = function() {
   
   // Disable default actions
   document.addEventListener('contextmenu', (e) => e.preventDefault());
-  document.addEventListener('touchstart', (e) => e.preventDefault());
-  document.addEventListener('pointerdown', (e) => e.preventDefault());
+  document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('pointerdown', (e) => e.preventDefault(), { passive: false });
+  
   
   function applyStyles() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
