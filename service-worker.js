@@ -3,6 +3,7 @@ const networkFirstFiles = [
     '/',
     '/index.html',
     '/app.js',
+    '/notification-manager.js',
     '/manifest.json',
     '/booklet/booklet.css',
     '/booklet/booklet.js',
@@ -19,6 +20,7 @@ const urlsToCache = [
     '/',
     '/index.html',
     '/app.js',
+    '/notification-manager.js',
     '/manifest.json',
     '/version-manager.js',
     '/gamepad.js',
@@ -91,7 +93,6 @@ async function notifyClientsWhenOfflineReady() {
 }
 
 self.addEventListener('install', event => {
-    self.skipWaiting();
     event.waitUntil(
         caches.open(APP_CACHE).then(cache => {
             // Silently fail on individual files to prevent the whole install from breaking
@@ -124,8 +125,15 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'CHECK_OFFLINE_READY') {
-        notifyClientsWhenOfflineReady();
+    if (!event.data) return;
+
+    if (event.data.type === 'CHECK_OFFLINE_READY') {
+        event.waitUntil(notifyClientsWhenOfflineReady());
+        return;
+    }
+
+    if (event.data.type === 'SKIP_WAITING') {
+        event.waitUntil(self.skipWaiting());
     }
 });
 
