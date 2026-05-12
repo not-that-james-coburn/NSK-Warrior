@@ -1,6 +1,9 @@
-import NotificationManager from './notification-manager.js';
+const notificationManager = window.notificationManager || new window.NotificationManager();
+window.notificationManager = notificationManager;
 
-const notificationManager = new NotificationManager();
+let refreshingForUpdate = false;
+let updateReloadRequested = false;
+let updateReloadFallbackTimer = null;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
@@ -8,9 +11,51 @@ if ('serviceWorker' in navigator) {
       const registration = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
 
+      const reloadForApprovedUpdate = (reason) => {
+        if (refreshingForUpdate) return;
+
+        refreshingForUpdate = true;
+
+        if (updateReloadFallbackTimer) {
+          clearTimeout(updateReloadFallbackTimer);
+          updateReloadFallbackTimer = null;
+        }
+
+        console.log(`${reason} — reloading for the approved service worker update.`);
+        window.location.reload();
+      };
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!updateReloadRequested) return;
+        reloadForApprovedUpdate('controllerchange detected');
+      });
+
       const showUpdateAvailable = worker => {
+        const updateWorker = worker || registration.waiting;
+
         notificationManager.show('UPDATE_AVAILABLE', {
-          version: worker?.scriptURL || registration.active?.scriptURL || 'service-worker'
+          version: updateWorker?.scriptURL || registration.active?.scriptURL || 'service-worker',
+          onReload: () => {
+            const waitingWorker = registration.waiting || updateWorker;
+
+            updateReloadRequested = true;
+
+            if (waitingWorker) {
+              waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+
+              if (updateReloadFallbackTimer) {
+                clearTimeout(updateReloadFallbackTimer);
+              }
+
+              updateReloadFallbackTimer = setTimeout(() => {
+                reloadForApprovedUpdate('controllerchange was not observed after SKIP_WAITING');
+              }, 4000);
+
+              return;
+            }
+
+            reloadForApprovedUpdate('No waiting service worker was available');
+          }
         });
       };
 
@@ -68,13 +113,6 @@ if ('serviceWorker' in navigator) {
         readyRegistration.active.postMessage({ type: 'CHECK_OFFLINE_READY' });
       }
 
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshingForUpdate) return;
-        refreshingForUpdate = true;
-        console.log('controllerchange detected — reloading for the approved service worker update.');
-        window.location.reload();
-      });
-
       window.addEventListener('beforeinstallprompt', (event) => {
         event.preventDefault();
         window.deferredPrompt = event;
@@ -82,11 +120,12 @@ if ('serviceWorker' in navigator) {
       });
 
       if (window.self !== window.top) {
-        const dismissed = localStorage.getItem('install-prompt-dismissed');
+        const dismissed = notificationManager.safeGetItem('install-prompt-dismissed');
         const now = Date.now();
         const oneWeek = 7 * 24 * 60 * 60 * 1000;
+        const dismissedAt = dismissed ? parseInt(dismissed, 10) : 0;
 
-        if (!dismissed || now - parseInt(dismissed, 10) > oneWeek) {
+        if (!dismissedAt || now - dismissedAt > oneWeek) {
           setTimeout(() => {
             notificationManager.show('INSTALL_PWA', { source: 'iframe' });
           }, 2000);
