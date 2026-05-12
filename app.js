@@ -3,7 +3,13 @@ if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      
+
+      let updateReloadRequested = false;
+
+      const reloadWhenUpdateControlsPage = () => {
+        updateReloadRequested = true;
+      };
+
       // Helper to handle an installing worker's lifecycle
       const handleInstalling = (worker) => {
         if (!worker) return;
@@ -14,31 +20,31 @@ if ('serviceWorker' in navigator) {
             // If there's an active controller, this is an update (not first install)
             if (navigator.serviceWorker.controller) {
               console.log('New service worker installed (update).');
-              showUpdateNotification();
+              showUpdateNotification(registration, reloadWhenUpdateControlsPage);
             } else {
               console.log('Service worker installed for the first time (no prior controller).');
             }
           }
         });
       };
-      
+
       // If there's already a waiting worker, treat that as an available update
       if (registration.waiting) {
         console.log('Found waiting worker on register — treating as update.');
-        showUpdateNotification();
+        showUpdateNotification(registration, reloadWhenUpdateControlsPage);
       }
-      
+
       // If there's an installing worker already, attach listeners
       if (registration.installing) {
         handleInstalling(registration.installing);
       }
-      
+
       // Always attach updatefound to catch new installs — do this BEFORE update()
       registration.addEventListener('updatefound', () => {
         console.log('updatefound fired on registration');
         handleInstalling(registration.installing);
       });
-      
+
       // Check for updates before calling update() to avoid race.
       try {
         await registration.update();
@@ -46,7 +52,7 @@ if ('serviceWorker' in navigator) {
       } catch (err) {
         console.warn('registration.update() failed:', err);
       }
-      
+
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'OFFLINE_READY') {
           showOfflineReadyNotification(event.data.cacheName);
@@ -58,11 +64,11 @@ if ('serviceWorker' in navigator) {
         readyRegistration.active.postMessage({ type: 'CHECK_OFFLINE_READY' });
       }
 
-      // Optional: listen for controllerchange to detect when a new worker takes control
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         console.log('controllerchange detected — a new service worker has taken control.');
-        // reload here to force using the new SW:
-        // window.location.reload();
+        if (updateReloadRequested) {
+          window.location.reload();
+        }
       });
     } catch (error) {
       console.log('ServiceWorker registration failed: ', error);
@@ -70,12 +76,12 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-function showUpdateNotification() {
+function showUpdateNotification(registration, onReloadRequested) {
   console.log('showUpdateNotification called');
   const notification = document.createElement('div');
   notification.innerHTML = `
     <div id="update-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out;">
-      <p id="modal-message">An update is available!</p>
+      <p id="modal-message">An update is ready. Reload to use the latest version?</p>
       <div id="modal-buttons">
         <button id="update-button" style="background: #a00000;">Reload</button>
       </div>
@@ -96,7 +102,19 @@ function showUpdateNotification() {
   const updateButton = document.getElementById('update-button');
   if (updateButton) {
     updateButton.addEventListener('click', () => {
-      window.location.reload();
+      const waitingWorker = registration && registration.waiting;
+      if (!waitingWorker) {
+        console.warn('No waiting service worker found; reloading current page.');
+        window.location.reload();
+        return;
+      }
+
+      if (typeof onReloadRequested === 'function') {
+        onReloadRequested();
+      }
+
+      updateButton.disabled = true;
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
     });
   } else {
     console.warn('update-button not found when wiring click handler.');
