@@ -3,8 +3,25 @@ class NotificationManager {
     this.queue = [];
     this.isProcessing = false;
     this.currentType = null;
+    this.currentDedupKey = null;
     this.shownUpdateVersions = new Set();
-    this.lowPriorityTypes = new Set(['OFFLINE_READY', 'INSTALL_PWA']);
+  }
+
+  safeGetItem(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  safeSetItem(key, value) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   getDedupKey(type, options = {}) {
@@ -16,7 +33,7 @@ class NotificationManager {
   }
 
   hasMatchingNotification(type, dedupKey) {
-    if (this.currentType === type) return true;
+    if (this.currentType === type && this.currentDedupKey === dedupKey) return true;
 
     return this.queue.some(item => {
       return item.type === type && this.getDedupKey(item.type, item.options) === dedupKey;
@@ -24,23 +41,11 @@ class NotificationManager {
   }
 
   hasSeenUpdateVersion(dedupKey) {
-    if (this.shownUpdateVersions.has(dedupKey)) return true;
-
-    try {
-      return localStorage.getItem(`update-available-notified-${dedupKey}`) === 'true';
-    } catch (error) {
-      return false;
-    }
+    return this.shownUpdateVersions.has(dedupKey);
   }
 
   markUpdateVersionSeen(dedupKey) {
     this.shownUpdateVersions.add(dedupKey);
-
-    try {
-      localStorage.setItem(`update-available-notified-${dedupKey}`, 'true');
-    } catch (error) {
-      // Ignore storage failures; in-memory de-duplication still prevents repeats this session.
-    }
   }
 
   async show(type, options = {}) {
@@ -53,8 +58,6 @@ class NotificationManager {
         }
 
         this.markUpdateVersionSeen(dedupKey);
-      } else if (this.lowPriorityTypes.has(type) && this.hasMatchingNotification(type, dedupKey)) {
-        return false;
       } else if (this.hasMatchingNotification(type, dedupKey)) {
         return false;
       }
@@ -71,11 +74,13 @@ class NotificationManager {
     this.isProcessing = true;
     const { type, options } = this.queue.shift();
     this.currentType = type;
+    this.currentDedupKey = this.getDedupKey(type, options);
 
     try {
       await this.render(type, options);
     } finally {
       this.currentType = null;
+      this.currentDedupKey = null;
       this.isProcessing = false;
       this.processQueue();
     }
@@ -84,7 +89,7 @@ class NotificationManager {
   render(type, options = {}) {
     switch (type) {
       case 'UPDATE_AVAILABLE':
-        return this.showUpdateNotification();
+        return this.showUpdateNotification(options);
       case 'OFFLINE_READY':
         return this.showOfflineReadyNotification(options.cacheName);
       case 'INSTALL_PWA':
@@ -95,14 +100,15 @@ class NotificationManager {
     }
   }
 
-  showUpdateNotification() {
+  showUpdateNotification(options = {}) {
     console.log('showUpdateNotification called');
     const notification = document.createElement('div');
     notification.innerHTML = `
-      <div id="update-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out;">
-        <p id="modal-message">An update is available!</p>
+      <div id="update-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(50, 0, 0, 0.9); border: 1px solid #a00000; border-radius: 20px; padding: 20px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
+        <p style="margin: 0; font-weight: 700;">An update is available!</p>
+        <p style="margin: 6px 0 0; font-size: 0.9em;">Reload to use the newest version.</p>
         <div id="modal-buttons">
-          <button id="update-button" style="background: #a00000;">Reload</button>
+          <button id="update-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Reload</button>
         </div>
       </div>
     `;
@@ -121,6 +127,11 @@ class NotificationManager {
     const updateButton = document.getElementById('update-button');
     if (updateButton) {
       updateButton.addEventListener('click', () => {
+        if (typeof options.onReload === 'function') {
+          options.onReload();
+          return;
+        }
+
         window.location.reload();
       });
     } else {
@@ -132,9 +143,9 @@ class NotificationManager {
 
   showOfflineReadyNotification(cacheName = 'default') {
     const storageKey = `offline-ready-notified-${cacheName}`;
-    if (localStorage.getItem(storageKey) === 'true') return Promise.resolve();
+    if (this.safeGetItem(storageKey) === 'true') return Promise.resolve();
 
-    localStorage.setItem(storageKey, 'true');
+    this.safeSetItem(storageKey, 'true');
     console.log('showOfflineReadyNotification called');
 
     const notification = document.createElement('div');
@@ -160,11 +171,12 @@ class NotificationManager {
   }
 
   showInstallPwaNotification(options = {}) {
-    const dismissed = localStorage.getItem('install-prompt-dismissed');
+    const dismissed = this.safeGetItem('install-prompt-dismissed');
     const now = Date.now();
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    const dismissedAt = dismissed ? parseInt(dismissed, 10) : 0;
 
-    if (dismissed && now - parseInt(dismissed, 10) <= oneWeek) {
+    if (dismissedAt && now - dismissedAt <= oneWeek) {
       return Promise.resolve();
     }
 
@@ -181,8 +193,11 @@ class NotificationManager {
     `;
     document.body.appendChild(notification);
 
+    let dismissedNotification = false;
     const dismiss = () => {
-      localStorage.setItem('install-prompt-dismissed', Date.now().toString());
+      if (dismissedNotification) return;
+      dismissedNotification = true;
+      this.safeSetItem('install-prompt-dismissed', Date.now().toString());
       const el = document.getElementById('install-pwa-notification');
       if (el) el.style.top = '-150px';
       setTimeout(() => notification.remove(), 600);
@@ -207,12 +222,10 @@ class NotificationManager {
     });
 
     return new Promise(resolve => {
-      const finish = () => {
+      setTimeout(() => {
         dismiss();
         resolve();
-      };
-
-      setTimeout(finish, 8000);
+      }, 8000);
     });
   }
 
@@ -228,5 +241,5 @@ class NotificationManager {
 
 if (typeof window !== 'undefined') {
   window.NotificationManager = NotificationManager;
-  window.notificationManager = new NotificationManager();
+  window.notificationManager = window.notificationManager || new NotificationManager();
 }
