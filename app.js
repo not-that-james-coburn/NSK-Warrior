@@ -55,6 +55,12 @@ if ('serviceWorker' in navigator) {
             }
 
             reloadForApprovedUpdate('No waiting service worker was available');
+            if (waitingWorker) {
+              waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+              return;
+            }
+
+            window.location.reload();
           }
         });
       };
