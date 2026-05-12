@@ -1,3 +1,7 @@
+import NotificationManager from './notification-manager.js';
+
+const notificationManager = new NotificationManager();
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
@@ -64,11 +68,11 @@ if ('serviceWorker' in navigator) {
         readyRegistration.active.postMessage({ type: 'CHECK_OFFLINE_READY' });
       }
 
-      // Optional: listen for controllerchange to detect when a new worker takes control
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('controllerchange detected — a new service worker has taken control.');
-        // reload here to force using the new SW:
-        // window.location.reload();
+        if (refreshingForUpdate) return;
+        refreshingForUpdate = true;
+        console.log('controllerchange detected — reloading for the approved service worker update.');
+        window.location.reload();
       });
 
       window.addEventListener('beforeinstallprompt', (event) => {
