@@ -2,12 +2,33 @@ const notificationManager = window.notificationManager || new window.Notificatio
 window.notificationManager = notificationManager;
 
 let refreshingForUpdate = false;
+let updateReloadRequested = false;
+let updateReloadFallbackTimer = null;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
+
+      const reloadForApprovedUpdate = (reason) => {
+        if (refreshingForUpdate) return;
+
+        refreshingForUpdate = true;
+
+        if (updateReloadFallbackTimer) {
+          clearTimeout(updateReloadFallbackTimer);
+          updateReloadFallbackTimer = null;
+        }
+
+        console.log(`${reason} — reloading for the approved service worker update.`);
+        window.location.reload();
+      };
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!updateReloadRequested) return;
+        reloadForApprovedUpdate('controllerchange detected');
+      });
 
       const showUpdateAvailable = worker => {
         const updateWorker = worker || registration.waiting;
@@ -17,6 +38,23 @@ if ('serviceWorker' in navigator) {
           onReload: () => {
             const waitingWorker = registration.waiting || updateWorker;
 
+            updateReloadRequested = true;
+
+            if (waitingWorker) {
+              waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+
+              if (updateReloadFallbackTimer) {
+                clearTimeout(updateReloadFallbackTimer);
+              }
+
+              updateReloadFallbackTimer = setTimeout(() => {
+                reloadForApprovedUpdate('controllerchange was not observed after SKIP_WAITING');
+              }, 4000);
+
+              return;
+            }
+
+            reloadForApprovedUpdate('No waiting service worker was available');
             if (waitingWorker) {
               waitingWorker.postMessage({ type: 'SKIP_WAITING' });
               return;
@@ -80,13 +118,6 @@ if ('serviceWorker' in navigator) {
       if (readyRegistration.active) {
         readyRegistration.active.postMessage({ type: 'CHECK_OFFLINE_READY' });
       }
-
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshingForUpdate) return;
-        refreshingForUpdate = true;
-        console.log('controllerchange detected — reloading for the approved service worker update.');
-        window.location.reload();
-      });
 
       window.addEventListener('beforeinstallprompt', (event) => {
         event.preventDefault();
