@@ -106,7 +106,7 @@ class NotificationManager {
     notification.innerHTML = `
       <div id="update-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(50, 0, 0, 0.9); border: 1px solid #a00000; border-radius: 20px; padding: 20px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
         <p style="margin: 0; font-weight: 700;">An update is available!</p>
-        <p style="margin: 6px 0 0; font-size: 0.9em;">Reload to use the newest version.</p>
+        <p style="margin: 6px 0 0; font-size: 0.9em;">Reload for newest version.</p>
         <div id="modal-buttons">
           <button id="update-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Reload</button>
         </div>
@@ -150,9 +150,8 @@ class NotificationManager {
 
     const notification = document.createElement('div');
     notification.innerHTML = `
-      <div id="offline-ready-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(0, 0, 0, 0.9); color: #fff; border: 1px solid #2f8f2f; border-radius: 12px; padding: 12px 18px; text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);">
+      <div id="offline-ready-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background-color: rgba(50, 0, 0, 0.9); color: #fff; border: 1px solid #27ae60; border-radius: 12px; padding: 12px 18px; text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);">
         <p style="margin: 0; font-weight: 700;">Ready for offline play!</p>
-        <p style="margin: 6px 0 0; font-size: 0.9em;">Game assets have been saved on this device.</p>
       </div>
     `;
     document.body.appendChild(notification);
@@ -184,7 +183,7 @@ class NotificationManager {
     notification.innerHTML = `
       <div id="install-pwa-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(50, 0, 0, 0.9); border: 1px solid #a00000; border-radius: 20px; padding: 20px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
         <p style="margin: 0; font-weight: 700;">Install NSK Warrior?</p>
-        <p style="margin: 6px 0 0; font-size: 0.9em;">Add the game to your device for quicker access.</p>
+        <p style="margin: 6px 0 0; font-size: 0.9em;">Add the app to your device for quicker access.</p>
         <div id="modal-buttons">
           <button id="install-pwa-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Install</button>
           <button id="dismiss-pwa-button" style="background: #444; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Not now</button>
