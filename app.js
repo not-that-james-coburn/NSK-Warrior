@@ -1,9 +1,70 @@
+const notificationManager = window.notificationManager || new window.NotificationManager();
+window.notificationManager = notificationManager;
+
+let refreshingForUpdate = false;
+let updateReloadRequested = false;
+let updateReloadFallbackTimer = null;
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      
+
+      const reloadForApprovedUpdate = (reason) => {
+        if (refreshingForUpdate) return;
+
+        refreshingForUpdate = true;
+
+        if (updateReloadFallbackTimer) {
+          clearTimeout(updateReloadFallbackTimer);
+          updateReloadFallbackTimer = null;
+        }
+
+        console.log(`${reason} — reloading for the approved service worker update.`);
+        window.location.reload();
+      };
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!updateReloadRequested) return;
+        reloadForApprovedUpdate('controllerchange detected');
+      });
+
+      const showUpdateAvailable = worker => {
+        const updateWorker = worker || registration.waiting;
+
+        notificationManager.show('UPDATE_AVAILABLE', {
+          version: updateWorker?.scriptURL || registration.active?.scriptURL || 'service-worker',
+          onReload: () => {
+            const waitingWorker = registration.waiting || updateWorker;
+
+            updateReloadRequested = true;
+
+            if (waitingWorker) {
+              waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+
+              if (updateReloadFallbackTimer) {
+                clearTimeout(updateReloadFallbackTimer);
+              }
+
+              updateReloadFallbackTimer = setTimeout(() => {
+                reloadForApprovedUpdate('controllerchange was not observed after SKIP_WAITING');
+              }, 4000);
+
+              return;
+            }
+
+            reloadForApprovedUpdate('No waiting service worker was available');
+            if (waitingWorker) {
+              waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+              return;
+            }
+
+            window.location.reload();
+          }
+        });
+      };
+
       // Helper to handle an installing worker's lifecycle
       const handleInstalling = (worker) => {
         if (!worker) return;
@@ -14,31 +75,31 @@ if ('serviceWorker' in navigator) {
             // If there's an active controller, this is an update (not first install)
             if (navigator.serviceWorker.controller) {
               console.log('New service worker installed (update).');
-              showUpdateNotification();
+              showUpdateAvailable(worker);
             } else {
               console.log('Service worker installed for the first time (no prior controller).');
             }
           }
         });
       };
-      
+
       // If there's already a waiting worker, treat that as an available update
       if (registration.waiting) {
         console.log('Found waiting worker on register — treating as update.');
-        showUpdateNotification();
+        showUpdateAvailable(registration.waiting);
       }
-      
+
       // If there's an installing worker already, attach listeners
       if (registration.installing) {
         handleInstalling(registration.installing);
       }
-      
+
       // Always attach updatefound to catch new installs — do this BEFORE update()
       registration.addEventListener('updatefound', () => {
         console.log('updatefound fired on registration');
         handleInstalling(registration.installing);
       });
-      
+
       // Check for updates before calling update() to avoid race.
       try {
         await registration.update();
@@ -46,10 +107,10 @@ if ('serviceWorker' in navigator) {
       } catch (err) {
         console.warn('registration.update() failed:', err);
       }
-      
+
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'OFFLINE_READY') {
-          showOfflineReadyNotification(event.data.cacheName);
+          notificationManager.show('OFFLINE_READY', { cacheName: event.data.cacheName });
         }
       });
 
@@ -58,78 +119,26 @@ if ('serviceWorker' in navigator) {
         readyRegistration.active.postMessage({ type: 'CHECK_OFFLINE_READY' });
       }
 
-      // Optional: listen for controllerchange to detect when a new worker takes control
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('controllerchange detected — a new service worker has taken control.');
-        // reload here to force using the new SW:
-        // window.location.reload();
+      window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        window.deferredPrompt = event;
+        notificationManager.show('INSTALL_PWA');
       });
+
+      if (window.self !== window.top) {
+        const dismissed = notificationManager.safeGetItem('install-prompt-dismissed');
+        const now = Date.now();
+        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+        const dismissedAt = dismissed ? parseInt(dismissed, 10) : 0;
+
+        if (!dismissedAt || now - dismissedAt > oneWeek) {
+          setTimeout(() => {
+            notificationManager.show('INSTALL_PWA', { source: 'iframe' });
+          }, 2000);
+        }
+      }
     } catch (error) {
       console.log('ServiceWorker registration failed: ', error);
     }
   });
-}
-
-function showUpdateNotification() {
-  console.log('showUpdateNotification called');
-  const notification = document.createElement('div');
-  notification.innerHTML = `
-    <div id="update-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out;">
-      <p id="modal-message">An update is available!</p>
-      <div id="modal-buttons">
-        <button id="update-button" style="background: #a00000;">Reload</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(notification);
-  
-  // Allow the element to be attached then animate it into view
-  setTimeout(() => {
-    const el = document.getElementById('update-notification');
-    if (el) el.style.top = '20px';
-  }, 100);
-  
-  setTimeout(() => {
-    document.getElementById('update-notification').style.top = '-150px';
-  }, 5000);
-  
-  const updateButton = document.getElementById('update-button');
-  if (updateButton) {
-    updateButton.addEventListener('click', () => {
-      window.location.reload();
-    });
-  } else {
-    console.warn('update-button not found when wiring click handler.');
-  }
-}
-
-function showOfflineReadyNotification(cacheName = 'default') {
-  const storageKey = `offline-ready-notified-${cacheName}`;
-  if (localStorage.getItem(storageKey) === 'true') return;
-
-  localStorage.setItem(storageKey, 'true');
-  console.log('showOfflineReadyNotification called');
-
-  const notification = document.createElement('div');
-  notification.innerHTML = `
-    <div id="offline-ready-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(0, 0, 0, 0.9); color: #fff; border: 1px solid #2f8f2f; border-radius: 12px; padding: 12px 18px; text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);">
-      <p style="margin: 0; font-weight: 700;">Ready for offline play!</p>
-      <p style="margin: 6px 0 0; font-size: 0.9em;">Game assets have been saved on this device.</p>
-    </div>
-  `;
-  document.body.appendChild(notification);
-
-  setTimeout(() => {
-    const el = document.getElementById('offline-ready-notification');
-    if (el) el.style.top = '20px';
-  }, 100);
-
-  setTimeout(() => {
-    const el = document.getElementById('offline-ready-notification');
-    if (el) el.style.top = '-150px';
-  }, 5000);
-
-  setTimeout(() => {
-    notification.remove();
-  }, 5600);
 }
