@@ -170,12 +170,13 @@ class NotificationManager {
   }
 
   showInstallPwaNotification(options = {}) {
+    const accepted = this.safeGetItem('install-prompt-accepted');
     const dismissed = this.safeGetItem('install-prompt-dismissed');
     const now = Date.now();
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
     const dismissedAt = dismissed ? parseInt(dismissed, 10) : 0;
 
-    if (dismissedAt && now - dismissedAt <= oneWeek) {
+    if (accepted === 'true' || (dismissedAt && now - dismissedAt <= oneWeek)) {
       return Promise.resolve();
     }
 
@@ -193,13 +194,16 @@ class NotificationManager {
     document.body.appendChild(notification);
 
     let dismissedNotification = false;
-    const dismiss = () => {
+    const closeNotification = () => {
       if (dismissedNotification) return;
       dismissedNotification = true;
-      this.safeSetItem('install-prompt-dismissed', Date.now().toString());
       const el = document.getElementById('install-pwa-notification');
       if (el) el.style.top = '-150px';
       setTimeout(() => notification.remove(), 600);
+    };
+    const rememberDismissal = () => {
+      this.safeSetItem('install-prompt-dismissed', Date.now().toString());
+      closeNotification();
     };
 
     setTimeout(() => {
@@ -207,22 +211,30 @@ class NotificationManager {
       if (el) el.style.top = '20px';
     }, 100);
 
-    document.getElementById('dismiss-pwa-button')?.addEventListener('click', dismiss);
+    document.getElementById('dismiss-pwa-button')?.addEventListener('click', rememberDismissal);
     document.getElementById('install-pwa-button')?.addEventListener('click', async () => {
       if (window.deferredPrompt) {
         window.deferredPrompt.prompt();
-        await window.deferredPrompt.userChoice;
+        const choice = await window.deferredPrompt.userChoice;
+
+        if (choice?.outcome === 'accepted') {
+          this.safeSetItem('install-prompt-accepted', 'true');
+        } else if (choice?.outcome === 'dismissed') {
+          this.safeSetItem('install-prompt-dismissed', Date.now().toString());
+        }
+
         window.deferredPrompt = null;
       } else if (options.source === 'iframe') {
         window.open(window.location.href, '_blank', 'noopener');
+        this.safeSetItem('install-prompt-dismissed', Date.now().toString());
       }
 
-      dismiss();
+      closeNotification();
     });
 
     return new Promise(resolve => {
       setTimeout(() => {
-        dismiss();
+        closeNotification();
         resolve();
       }, 8000);
     });
