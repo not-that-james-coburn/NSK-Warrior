@@ -119,13 +119,23 @@ if ('serviceWorker' in navigator) {
         readyRegistration.active.postMessage({ type: 'CHECK_OFFLINE_READY' });
       }
 
+      const isEmbedded = () => {
+        try {
+          return window.self !== window.top;
+        } catch (error) {
+          return true;
+        }
+      };
+
       window.addEventListener('beforeinstallprompt', (event) => {
+        if (!isEmbedded()) return;
+
         event.preventDefault();
         window.deferredPrompt = event;
-        notificationManager.show('INSTALL_PWA');
+        notificationManager.show('INSTALL_PWA', { source: 'iframe' });
       });
 
-      if (window.self !== window.top) {
+      if (isEmbedded()) {
         const dismissed = notificationManager.safeGetItem('install-prompt-dismissed');
         const now = Date.now();
         const oneWeek = 7 * 24 * 60 * 60 * 1000;
