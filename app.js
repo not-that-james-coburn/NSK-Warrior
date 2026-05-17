@@ -128,11 +128,11 @@ if ('serviceWorker' in navigator) {
       };
 
       window.addEventListener('beforeinstallprompt', (event) => {
-        if (!isEmbedded()) return;
+        const embedded = isEmbedded();
 
         event.preventDefault();
         window.deferredPrompt = event;
-        notificationManager.show('INSTALL_PWA', { source: 'iframe' });
+        notificationManager.show('INSTALL_PWA', { source: embedded ? 'iframe' : 'direct' });
       });
 
       if (isEmbedded()) {
