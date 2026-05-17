@@ -170,12 +170,13 @@ class NotificationManager {
   }
 
   showInstallPwaNotification(options = {}) {
+    const accepted = this.safeGetItem('install-prompt-accepted');
     const dismissed = this.safeGetItem('install-prompt-dismissed');
     const now = Date.now();
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
     const dismissedAt = dismissed ? parseInt(dismissed, 10) : 0;
 
-    if (dismissedAt && now - dismissedAt <= oneWeek) {
+    if (accepted === 'true' || (dismissedAt && now - dismissedAt <= oneWeek)) {
       return Promise.resolve();
     }
 
@@ -183,23 +184,26 @@ class NotificationManager {
     notification.innerHTML = `
       <div id="install-pwa-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(50, 0, 0, 0.9); border: 1px solid #a00000; border-radius: 20px; padding: 20px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
         <p style="margin: 0; font-weight: 700;">Install NSK Warrior?</p>
-        <p style="margin: 6px 0 0; font-size: 0.9em;">Add the app to your device for quicker access.</p>
+        <p style="margin: 6px 0 0; font-size: 0.9em;">Jump back into your game easier by installing the app.</p>
         <div id="modal-buttons">
-          <button id="install-pwa-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Install</button>
           <button id="dismiss-pwa-button" style="background: #444; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Not now</button>
+                    <button id="install-pwa-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Install</button>
         </div>
       </div>
     `;
     document.body.appendChild(notification);
 
     let dismissedNotification = false;
-    const dismiss = () => {
+    const closeNotification = () => {
       if (dismissedNotification) return;
       dismissedNotification = true;
-      this.safeSetItem('install-prompt-dismissed', Date.now().toString());
       const el = document.getElementById('install-pwa-notification');
       if (el) el.style.top = '-150px';
       setTimeout(() => notification.remove(), 600);
+    };
+    const rememberDismissal = () => {
+      this.safeSetItem('install-prompt-dismissed', Date.now().toString());
+      closeNotification();
     };
 
     setTimeout(() => {
@@ -207,22 +211,30 @@ class NotificationManager {
       if (el) el.style.top = '20px';
     }, 100);
 
-    document.getElementById('dismiss-pwa-button')?.addEventListener('click', dismiss);
+    document.getElementById('dismiss-pwa-button')?.addEventListener('click', rememberDismissal);
     document.getElementById('install-pwa-button')?.addEventListener('click', async () => {
       if (window.deferredPrompt) {
         window.deferredPrompt.prompt();
-        await window.deferredPrompt.userChoice;
+        const choice = await window.deferredPrompt.userChoice;
+
+        if (choice?.outcome === 'accepted') {
+          this.safeSetItem('install-prompt-accepted', 'true');
+        } else if (choice?.outcome === 'dismissed') {
+          this.safeSetItem('install-prompt-dismissed', Date.now().toString());
+        }
+
         window.deferredPrompt = null;
       } else if (options.source === 'iframe') {
         window.open(window.location.href, '_blank', 'noopener');
+        this.safeSetItem('install-prompt-dismissed', Date.now().toString());
       }
 
-      dismiss();
+      closeNotification();
     });
 
     return new Promise(resolve => {
       setTimeout(() => {
-        dismiss();
+        closeNotification();
         resolve();
       }, 8000);
     });
