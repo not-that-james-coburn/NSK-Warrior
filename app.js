@@ -132,7 +132,9 @@ if ('serviceWorker' in navigator) {
 
         event.preventDefault();
         window.deferredPrompt = event;
-        notificationManager.show('INSTALL_PWA', { source: embedded ? 'iframe' : 'direct' });
+        if (embedded) {
+          notificationManager.show('INSTALL_PWA', { source: 'iframe' });
+        }
       });
 
       if (isEmbedded()) {
