@@ -183,11 +183,11 @@ class NotificationManager {
     const notification = document.createElement('div');
     notification.innerHTML = `
       <div id="install-pwa-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(50, 0, 0, 0.9); border: 1px solid #a00000; border-radius: 20px; padding: 20px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
-        <p style="margin: 0; font-weight: 700;">Install NSK Warrior?</p>
-        <p style="margin: 6px 0 0; font-size: 0.9em;">Jump back into your game easier by installing the app.</p>
+        <p style="margin: 0; font-weight: 700;">NSK Warrior App</p>
+        <p style="margin: 6px 0 0; font-size: 0.9em;">Go to nsk-warrior.netlify.app to install</p>
         <div id="modal-buttons">
           <button id="dismiss-pwa-button" style="background: #444; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Not now</button>
-                    <button id="install-pwa-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Install</button>
+          <button id="install-pwa-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">OK</button>
         </div>
       </div>
     `;
