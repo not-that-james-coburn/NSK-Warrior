@@ -655,7 +655,7 @@ function showModal(message, type = 'alert') {
       if (imageUrl) {
         const imgElement = document.createElement('img');
         imgElement.src = imageUrl;
-        imgElement.style.cssText = 'max-width: 100%; max-height: 400px; margin: 15px 0; border-radius: 4px;';
+        imgElement.className = 'modal-image';
         infoEl.appendChild(imgElement);
       }
     }

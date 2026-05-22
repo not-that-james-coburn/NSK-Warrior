@@ -1,10 +1,11 @@
-const APP_CACHE = 'nsk-warrior-cache-v018';
+const APP_CACHE = 'nsk-warrior-cache-v019';
 const networkFirstFiles = [
     '/',
     '/index.html',
     '/app.js',
     '/notification-manager.js',
     '/manifest.json',
+    '/styles/main.css',
     '/booklet/booklet.css',
     '/booklet/booklet.js',
     '/booklet/pages/2.webp',
@@ -22,6 +23,7 @@ const urlsToCache = [
     '/app.js',
     '/notification-manager.js',
     '/manifest.json',
+    '/styles/main.css',
     '/version-manager.js',
     '/gamepad.js',
     '/loading-ring.js',

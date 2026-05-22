@@ -104,11 +104,11 @@ class NotificationManager {
     console.log('showUpdateNotification called');
     const notification = document.createElement('div');
     notification.innerHTML = `
-      <div id="update-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(50, 0, 0, 0.9); border: 1px solid #a00000; border-radius: 20px; padding: 20px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
-        <p style="margin: 0; font-weight: 700;">An update is available!</p>
-        <p style="margin: 6px 0 0; font-size: 0.9em;">Reload for newest version.</p>
+      <div id="update-notification" class="notice-toast notice-toast--panel">
+        <p class="notice-title">An update is available!</p>
+        <p class="notice-subtitle">Reload for newest version.</p>
         <div id="modal-buttons">
-          <button id="update-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Reload</button>
+          <button id="update-button" class="modal-btn confirm">Reload</button>
         </div>
       </div>
     `;
@@ -116,12 +116,12 @@ class NotificationManager {
 
     setTimeout(() => {
       const el = document.getElementById('update-notification');
-      if (el) el.style.top = '20px';
+      if (el) el.classList.add('is-visible');
     }, 100);
 
     setTimeout(() => {
       const el = document.getElementById('update-notification');
-      if (el) el.style.top = '-150px';
+      if (el) el.classList.remove('is-visible');
     }, 5000);
 
     const updateButton = document.getElementById('update-button');
@@ -150,20 +150,20 @@ class NotificationManager {
 
     const notification = document.createElement('div');
     notification.innerHTML = `
-      <div id="offline-ready-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background-color: rgba(50, 0, 0, 0.9); color: #fff; border: 1px solid #27ae60; border-radius: 12px; padding: 12px 18px; text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);">
-        <p style="margin: 0; font-weight: 700;">Ready for offline play!</p>
+      <div id="offline-ready-notification" class="notice-toast notice-toast--compact">
+        <p class="notice-title">Ready for offline play!</p>
       </div>
     `;
     document.body.appendChild(notification);
 
     setTimeout(() => {
       const el = document.getElementById('offline-ready-notification');
-      if (el) el.style.top = '20px';
+      if (el) el.classList.add('is-visible');
     }, 100);
 
     setTimeout(() => {
       const el = document.getElementById('offline-ready-notification');
-      if (el) el.style.top = '-150px';
+      if (el) el.classList.remove('is-visible');
     }, 5000);
 
     return this.removeAfter(notification, 5600);
@@ -182,12 +182,12 @@ class NotificationManager {
 
     const notification = document.createElement('div');
     notification.innerHTML = `
-      <div id="install-pwa-notification" style="position: fixed; top: -150px; left: 50%; z-index: 1000; transform: translateX(-50%); transition: top 0.5s ease-in-out; background: rgba(50, 0, 0, 0.9); border: 1px solid #a00000; border-radius: 20px; padding: 20px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
-        <p style="margin: 0; font-weight: 700;">NSK Warrior App</p>
-        <p style="margin: 6px 0 0; font-size: 0.9em;">Go to nsk-warrior.netlify.app to install</p>
+      <div id="install-pwa-notification" class="notice-toast notice-toast--panel">
+        <p class="notice-title">NSK Warrior App</p>
+        <p class="notice-subtitle">Go to nsk-warrior.netlify.app to install</p>
         <div id="modal-buttons">
-          <button id="dismiss-pwa-button" style="background: #444; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">Not now</button>
-          <button id="install-pwa-button" style="background: #a00000; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 10px 5px 0;">OK</button>
+          <button id="dismiss-pwa-button" class="modal-btn">Not now</button>
+          <button id="install-pwa-button" class="modal-btn confirm">OK</button>
         </div>
       </div>
     `;
@@ -198,7 +198,7 @@ class NotificationManager {
       if (dismissedNotification) return;
       dismissedNotification = true;
       const el = document.getElementById('install-pwa-notification');
-      if (el) el.style.top = '-150px';
+      if (el) el.classList.remove('is-visible');
       setTimeout(() => notification.remove(), 600);
     };
     const rememberDismissal = () => {
@@ -208,7 +208,7 @@ class NotificationManager {
 
     setTimeout(() => {
       const el = document.getElementById('install-pwa-notification');
-      if (el) el.style.top = '20px';
+      if (el) el.classList.add('is-visible');
     }, 100);
 
     document.getElementById('dismiss-pwa-button')?.addEventListener('click', rememberDismissal);
