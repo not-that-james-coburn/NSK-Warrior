@@ -74,7 +74,7 @@ html {
 .hidden { display: none !important; }
 
 .display-none { display: none; }
-.modal-copy { margin-top: 0; font-size: 1.1em; }
+.modal-copy { margin-top: 0; font-size: 1.1em; white-space: pre-line; }
 
 
 /* Notification toasts */
