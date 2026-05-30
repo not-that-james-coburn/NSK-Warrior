@@ -183,35 +183,88 @@ class NotificationManager {
     const notification = document.createElement('div');
     notification.innerHTML = `
       <div id="install-pwa-notification" class="notice-toast notice-toast--panel">
-        <p class="notice-title">NSK Warrior App</p>
-        <p class="notice-subtitle">Go to nsk-warrior.netlify.app to install</p>
+        <p class="notice-title">Install the App</p>
         <div id="modal-buttons">
           <button id="dismiss-pwa-button" class="modal-btn">Not now</button>
           <button id="install-pwa-button" class="modal-btn confirm">OK</button>
+        </div>
+        <div>
+          <button id="install-pwa-info-button" class="modal-btn">What's This?</button>
         </div>
       </div>
     `;
     document.body.appendChild(notification);
 
     let dismissedNotification = false;
+    let autoDismissTimeout = null;
+    let autoDismissStartedAt = 0;
+    let autoDismissRemaining = 8000;
+    let resolveNotification = () => {};
+
+    const clearAutoDismiss = () => {
+      if (!autoDismissTimeout) return;
+
+      clearTimeout(autoDismissTimeout);
+      autoDismissTimeout = null;
+    };
     const closeNotification = () => {
       if (dismissedNotification) return;
       dismissedNotification = true;
+      clearAutoDismiss();
       const el = document.getElementById('install-pwa-notification');
       if (el) el.classList.remove('is-visible');
       setTimeout(() => notification.remove(), 600);
+      resolveNotification();
+    };
+    const pauseAutoDismiss = () => {
+      if (!autoDismissTimeout) return;
+
+      autoDismissRemaining = Math.max(0, autoDismissRemaining - (Date.now() - autoDismissStartedAt));
+      clearAutoDismiss();
+    };
+    const startAutoDismiss = (delay = autoDismissRemaining) => {
+      if (dismissedNotification) return;
+
+      clearAutoDismiss();
+      autoDismissRemaining = delay;
+      autoDismissStartedAt = Date.now();
+      autoDismissTimeout = setTimeout(closeNotification, autoDismissRemaining);
     };
     const rememberDismissal = () => {
       this.safeSetItem('install-prompt-dismissed', Date.now().toString());
       closeNotification();
+    };
+    const showInfoModal = async () => {
+      if (dismissedNotification) return;
+
+      pauseAutoDismiss();
+
+      if (typeof window.showModal === 'function') {
+        await window.showModal([
+          'You will be redirected to nsk-warrior.netlify.app to install this game as a PWA.',
+          'A PWA (progressive web app) is a website that can be installed like an app for quicker launching and offline/app-like behavior.',
+          '',
+          '𝗖𝗵𝗿𝗼𝗺𝗲: use the browser install prompt if shown, or the install icon / browser menu option.',
+          '',
+          '𝗦𝗮𝗳𝗮𝗿𝗶: use Share, then “Add to Home Screen.”',
+          '',
+          '𝗙𝗶𝗿𝗲𝗳𝗼𝘅: use the browser menu or home-screen/install option where supported.'
+        ].join('\n'), 'info');
+      } else {
+        console.warn('showModal is not available for the install PWA info dialog.');
+      }
+
+      startAutoDismiss(autoDismissRemaining);
     };
 
     setTimeout(() => {
       const el = document.getElementById('install-pwa-notification');
       if (el) el.classList.add('is-visible');
     }, 100);
+    startAutoDismiss();
 
     document.getElementById('dismiss-pwa-button')?.addEventListener('click', rememberDismissal);
+    document.getElementById('install-pwa-info-button')?.addEventListener('click', showInfoModal);
     document.getElementById('install-pwa-button')?.addEventListener('click', async () => {
       if (window.deferredPrompt) {
         window.deferredPrompt.prompt();
@@ -233,10 +286,7 @@ class NotificationManager {
     });
 
     return new Promise(resolve => {
-      setTimeout(() => {
-        closeNotification();
-        resolve();
-      }, 8000);
+      resolveNotification = resolve;
     });
   }
 

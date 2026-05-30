@@ -666,6 +666,10 @@ function showModal(message, type = 'alert') {
   });
 }
 
+if (typeof window !== 'undefined') {
+  window.showModal = showModal;
+}
+
 /**
  * Handles the visual state of the booklet.
  * Returns TRUE if an action was performed (useful for stopping event chains).
