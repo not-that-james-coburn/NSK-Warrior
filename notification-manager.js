@@ -183,8 +183,7 @@ class NotificationManager {
     const notification = document.createElement('div');
     notification.innerHTML = `
       <div id="install-pwa-notification" class="notice-toast notice-toast--panel">
-        <p class="notice-title">NSK Warrior App</p>
-        <p class="notice-subtitle">Go to nsk-warrior.netlify.app to install</p>
+        <p class="notice-title">Install the App</p>
         <div id="modal-buttons">
           <button id="dismiss-pwa-button" class="modal-btn">Not now</button>
           <button id="install-pwa-button" class="modal-btn confirm">OK</button>
@@ -242,11 +241,14 @@ class NotificationManager {
 
       if (typeof window.showModal === 'function') {
         await window.showModal([
-          'A PWA is a website that can be installed like an app for quicker launching and offline/app-like behavior.',
+          'You will be redirected to nsk-warrior.netlify.app to install this game as a PWA.',
+          'A PWA (progressive web app) is a website that can be installed like an app for quicker launching and offline/app-like behavior.',
           '',
-          'Chrome: use the browser install prompt if shown, or the install icon / browser menu option.',
-          'Safari: use Share, then “Add to Home Screen.”',
-          'Firefox: use the browser menu or home-screen/install option where supported.'
+          '𝗖𝗵𝗿𝗼𝗺𝗲: use the browser install prompt if shown, or the install icon / browser menu option.',
+          '',
+          '𝗦𝗮𝗳𝗮𝗿𝗶: use Share, then “Add to Home Screen.”',
+          '',
+          '𝗙𝗶𝗿𝗲𝗳𝗼𝘅: use the browser menu or home-screen/install option where supported.'
         ].join('\n'), 'info');
       } else {
         console.warn('showModal is not available for the install PWA info dialog.');
