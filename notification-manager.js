@@ -185,7 +185,7 @@ class NotificationManager {
       <div id="install-pwa-notification" class="notice-toast notice-toast--panel">
         <p class="notice-title">Install the App</p>
         <div id="modal-buttons">
-          <button id="dismiss-pwa-button" class="modal-btn">Not now</button>
+          <button id="dismiss-pwa-button" class="modal-btn" style"background-color: rgba(50, 0, 0, 0.9); border: 1px solid #a00000;">Not now</button>
           <button id="install-pwa-button" class="modal-btn confirm">OK</button>
         </div>
         <div>
