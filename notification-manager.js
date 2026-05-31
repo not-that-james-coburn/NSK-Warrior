@@ -189,7 +189,7 @@ class NotificationManager {
           <button id="install-pwa-button" class="modal-btn confirm">OK</button>
         </div>
         <div>
-          <button id="install-pwa-info-button" class="modal-btn">What's This?</button>
+          <button id="install-pwa-info-button" class="modal-btn" style="background-color: transparent; border: 1px solid #fff;">What's This?</button>
         </div>
       </div>
     `;
