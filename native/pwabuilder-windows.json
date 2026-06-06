@@ -8,7 +8,7 @@
   "generateModernPackage": true,
   "classicPackage": {
     "generate": true,
-    "version": "1.0.0"
+    "version": "0.9.0"
   },
   "publisher": {
     "displayName": "James Coburn",
