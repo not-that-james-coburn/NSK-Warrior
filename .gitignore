@@ -1,0 +1,18 @@
+node_modules/
+npm-debug.log*
+.DS_Store
+
+# Native build outputs
+android/.gradle/
+android/app/build/
+android/build/
+ios/App/build/
+ios/DerivedData/
+build/
+dist/
+
+# Signing material should be provided through CI secrets or local developer machines.
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
