@@ -1,0 +1,18 @@
+{
+  "name": "NSK Warrior",
+  "packageId": "NSKWarrior",
+  "url": "https://nsk-warrior.netlify.app",
+  "startUrl": "https://nsk-warrior.netlify.app/index.html",
+  "version": "1.0.0",
+  "allowSigning": true,
+  "generateModernPackage": true,
+  "classicPackage": {
+    "generate": true,
+    "version": "0.9.0"
+  },
+  "publisher": {
+    "displayName": "James Coburn",
+    "commonName": "James Coburn"
+  },
+  "resourceLanguage": "EN-US"
+}
