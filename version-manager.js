@@ -1472,7 +1472,7 @@ async function launchGame(verId, slotNum) {
   window.EJS_backgroundColor = "#000000";
   window.EJS_threads = (typeof SharedArrayBuffer !== 'undefined' && typeof Atomics !== 'undefined');
   console.log("Threads enabled?", EJS_threads);
-  window.EJS_Buttons = { restart: false };
+  window.EJS_Buttons = { restart: false, fullscreen: false };
   window.EJS_defaultOptions = { 'save-state-location': 'browser' };
   
   let rawData = await getSaveBlob(uniqueId);
