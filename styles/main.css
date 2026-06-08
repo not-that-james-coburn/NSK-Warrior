@@ -38,6 +38,9 @@ html {
   .save-slot-container.open { overflow-y: auto; max-height: 75vh; }
   #version-list-root { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; height: auto; }
 }
+@media (orientation: portrait) {
+  #game-container { padding-bottom: env(safe-area-inset-bottom); padding-top: env(safe-area-inset-top); }
+}
 
 .slot-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #444; }
 .slot-row:last-child { border: none; }
