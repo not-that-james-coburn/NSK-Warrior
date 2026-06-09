@@ -16,7 +16,7 @@ const APP_CONFIG = {
       loadState: "/versions/original/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR", "NSK_WARRIOR_OG", "NSK_WARRIOR_OG_1", "NSK_WARRIOR_OG_2", "NSK_WARRIOR_OG_3", "NSK_WARRIOR_OG_4"],
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return "Original Version (2008)\n\nUnfiltered, unmodified.\nAll the nuances, quirks and occasional bugs of the first release.";
       },
@@ -27,7 +27,7 @@ const APP_CONFIG = {
       loadState: "/versions/v1.1/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR v1.1", "NSK_WARRIOR_v1.1", "NSK_WARRIOR_v1.1_1", "NSK_WARRIOR_v1.1_2", "NSK_WARRIOR_v1.1_3", "NSK_WARRIOR_v1.1_4"],
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return "Version 1.1 (2024)\n\nSame base game with a few additions. Notably:\n\n*Bug fixes\n*New Skills system";
       },
@@ -41,7 +41,7 @@ const APP_CONFIG = {
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
       update: "2.3",
-      versionInfo: true,
+      versionInfo: false,
       coverImage: null, //"/images/kf-cover.png",
       get infoMessage() {
         return {
@@ -59,7 +59,7 @@ const APP_CONFIG = {
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
       update: "2.3", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests, Assembly door fix, bosses difficulty tweeked up
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding '\u{25EF}'\n\nUPDATED to v${this.update}`;
       },
@@ -1472,7 +1472,7 @@ async function launchGame(verId, slotNum) {
   window.EJS_backgroundColor = "#000000";
   window.EJS_threads = (typeof SharedArrayBuffer !== 'undefined' && typeof Atomics !== 'undefined');
   console.log("Threads enabled?", EJS_threads);
-  window.EJS_Buttons = { restart: false };
+  window.EJS_Buttons = { restart: false, fullscreen: false };
   window.EJS_defaultOptions = { 'save-state-location': 'browser' };
   
   let rawData = await getSaveBlob(uniqueId);
