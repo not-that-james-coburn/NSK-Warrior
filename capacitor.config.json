@@ -2,6 +2,16 @@
   "appId": "app.nskwarrior.game",
   "appName": "NSK Warrior",
   "webDir": "native-web",
+  "android": {
+    "buildOptions": {
+      "keystorePath": ""
+    }
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": true
+    }
+  },
   "server": {
     "url": "https://nsk-warrior.netlify.app",
     "cleartext": false

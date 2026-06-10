@@ -50,7 +50,6 @@ const APP_CONFIG = {
         };
       },
     },
-    /*
     'tp': {
       label: "Test Play",
       prefix: "TEST_PLAY",
@@ -64,7 +63,6 @@ const APP_CONFIG = {
         return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding '\u{25EF}'\n\nUPDATED to v${this.update}`;
       },
     }
-    */
   }
 };
 
@@ -723,8 +721,7 @@ function bookHandler(action) {
 
 // --- 3. UNIFIED NAVIGATION HANDLER ---
 
-window.addEventListener('popstate', async (event) => {
-  const state = event.state;
+const handleNavigationState = async (state) => {
   const gameContainer = document.getElementById('game-container');
   const isGameVisible = window.getComputedStyle(gameContainer).display !== 'none';
   
@@ -787,12 +784,52 @@ window.addEventListener('popstate', async (event) => {
             console.log('Back navigation detected. Saving...');
             try { await performManualSave(); } catch (err) { console.error("Save failed:", err); }
           }
-          window.location.reload();
+
+          if (window.Capacitor && window.Capacitor.isNativePlatform() && window.capacitorApp) {
+             try {
+                window.capacitorApp.App.exitApp();
+             } catch (e) {
+                console.error("Failed to exit Capacitor app", e);
+                window.location.reload();
+             }
+          } else {
+             window.location.reload();
+          }
         });
+      } else if (window.Capacitor && window.Capacitor.isNativePlatform() && document.getElementById('ui-layer').style.display !== 'none') {
+          // If we are at root and not in game, and not in booklet, but in the versions menu:
+          if (window.versionMenuOpen) {
+              resetToTitle();
+          } else {
+              // we are at the title screen root
+              try {
+                  if (window.capacitorApp) window.capacitorApp.App.exitApp();
+              } catch (e) {}
+          }
+      } else if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+          try {
+              if (window.capacitorApp) window.capacitorApp.App.exitApp();
+          } catch (e) {}
       }
     }
   }
+};
+
+window.addEventListener('popstate', async (event) => {
+  await handleNavigationState(event.state);
 });
+
+if (window.Capacitor && window.Capacitor.isNativePlatform() && window.capacitorApp) {
+    window.capacitorApp.App.addListener('backButton', async ({ canGoBack }) => {
+      // If there's standard web history, just pop it so our popstate fires
+      if (canGoBack) {
+        window.history.back();
+      } else {
+        // If we are at the root history state, evaluate where we are
+        await handleNavigationState(window.history.state);
+      }
+    }).catch(err => console.error("Could not add backButton listener", err));
+}
 
 // --- 4. UI & MENU LOGIC ---
 

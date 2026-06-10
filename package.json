@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "@netlify/blobs": "latest",
-    "@capacitor/core": "7.6.6"
+    "@capacitor/app": "^7.1.2",
+    "@capacitor/core": "7.6.6",
+    "@capacitor/splash-screen": "^7.0.5",
+    "@capacitor/status-bar": "^7.0.6",
+    "@netlify/blobs": "latest"
   },
   "scripts": {
     "build:web": "node scripts/prepare-native-web.mjs",
@@ -18,8 +21,8 @@
     "ios:build": "npm run ios:sync && xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO"
   },
   "devDependencies": {
+    "@capacitor/android": "^7.6.6",
     "@capacitor/cli": "7.6.6",
-    "@capacitor/android": "7.6.6",
-    "@capacitor/ios": "7.6.6"
+    "@capacitor/ios": "^7.6.6"
   }
 }

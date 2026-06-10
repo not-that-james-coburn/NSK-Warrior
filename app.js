@@ -5,8 +5,27 @@ let refreshingForUpdate = false;
 let updateReloadRequested = false;
 let updateReloadFallbackTimer = null;
 
+// Handle Native Device Init (Fullscreen & Navigation Bar / Status Bar)
+const initNativeEnvironment = async () => {
+  if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+    try {
+      if (window.capacitorStatusBar) {
+        await window.capacitorStatusBar.StatusBar.hide();
+      }
+
+      if (window.capacitorSplashScreen) {
+        await window.capacitorSplashScreen.SplashScreen.hide();
+      }
+    } catch (e) {
+      console.warn("Failed to initialize Capacitor plugins for fullscreen", e);
+    }
+  }
+};
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
+    initNativeEnvironment();
+
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
