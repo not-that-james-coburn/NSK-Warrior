@@ -10,7 +10,6 @@ Using [**EmulatorJS**](https://github.com/EmulatorJS/) to preserve an original g
 ## Table of Contents
 - [Introduction](#introduction)
 - [Usage](#usage)
-- [Native Builds](#native-builds)
 - [Features](#features)
 - [Booklet](#booklet)
 - [License](#license)
@@ -34,11 +33,6 @@ Thanks to [**EmulatorJS**](https://github.com/EmulatorJS/), this project brings 
 To play the game, simply open your web browser and navigate to [nsk-warrior.netlify.app](https://nsk-warrior.netlify.app). Install the PWA to your home screen for a more integrated experience.
 
 The game is also available at [itch.io](https://imaginary-monkey.itch.io/nsk-warrior).
-
-
-## Native Builds
-
-This repo can also produce native app artifacts from the same main branch without changing the Netlify PWA deployment. Android and iOS use Capacitor in hosted mode so the native shells load the deployed Netlify app and keep using the existing `/api/serve-game/*` asset delivery route. Windows packaging metadata is tracked for PWABuilder/MSIX packaging. See [Native app builds](docs/native-builds.md) for local commands and CI workflows, and [Store submission and owner checklist](docs/store-submission.md) for the remaining signing, account, metadata, QA, and approval steps.
 
 ## Features
 - **Playable in Browser:**  Enjoy the game directly in your web browser.
