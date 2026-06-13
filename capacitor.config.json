@@ -1,9 +1,0 @@
-{
-  "appId": "app.nskwarrior.game",
-  "appName": "NSK Warrior",
-  "webDir": "native-web",
-  "server": {
-    "url": "https://nsk-warrior.netlify.app",
-    "cleartext": false
-  }
-}
