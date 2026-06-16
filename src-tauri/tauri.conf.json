@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "nsk-warrior",
+  "productName": "NSK Warrior",
   "version": "0.1.0",
   "identifier": "com.nsk.warrior",
   "build": {

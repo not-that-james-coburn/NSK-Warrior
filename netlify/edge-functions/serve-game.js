@@ -19,7 +19,10 @@ export default async (request, context) => {
   // Helper to check if a string contains our current host
   const isValidSource = (source) => source && source.includes(currentHost);
 
-  const isAllowed = isLocal(url) || isValidSource(referer) || isValidSource(origin);
+  // Tauri on Android usually serves from http://tauri.localhost
+  const isTauriAndroid = (source) => source && (source.includes("tauri.localhost") || source.includes("tauri://localhost"));
+
+  const isAllowed = isLocal(url) || isValidSource(referer) || isValidSource(origin) || isTauriAndroid(referer) || isTauriAndroid(origin);
 
   if (!isAllowed) {
     console.error(`[ServeGame] Blocked. Referer: ${referer}, Origin: ${origin}, Host: ${currentHost}`);
