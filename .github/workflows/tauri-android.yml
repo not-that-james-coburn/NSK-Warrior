@@ -53,7 +53,7 @@ jobs:
       - name: Build Android App
         run: |
           export NDK_HOME=$ANDROID_HOME/ndk/25.1.8937393
-          npx tauri android build --apk --debug
+          npx tauri android build --apk --debug --split-per-abi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
