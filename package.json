@@ -11,6 +11,7 @@
   },
   "scripts": {
     "dev": "",
-    "build": "node build.js"
+    "build": "node build.js",
+    "tauri": "tauri"
   }
 }
