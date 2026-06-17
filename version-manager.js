@@ -3,11 +3,14 @@
  */
 
 // --- 1. CONFIGURATION ---
+const isTauri = window.location.hostname === 'tauri.localhost' || window.location.protocol === 'tauri:';
+const baseUrl = isTauri ? 'https://nsk-warrior.netlify.app' : '';
+
 const APP_CONFIG = {
   ejsPath: "emulatorjs/4.0.9/data/",
   core: "mednafen_psx_hw",
-  biosUrl: "/api/serve-game/scph5501.bin?key=bios",
-  gameUrl: "/api/serve-game/RPG_Maker_USA.zip?key=rom",
+  biosUrl: `${baseUrl}/api/serve-game/scph5501.bin?key=bios`,
+  gameUrl: `${baseUrl}/api/serve-game/RPG_Maker_USA.zip?key=rom`,
   
   versions: {
     'og': {

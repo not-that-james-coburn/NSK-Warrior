@@ -1,4 +1,7 @@
-const APP_CACHE = 'nsk-warrior-cache-v019';
+const APP_CACHE = 'nsk-warrior-cache-v020';
+const isTauri = self.location.hostname === 'tauri.localhost' || self.location.protocol === 'tauri:';
+const baseUrl = isTauri ? 'https://nsk-warrior.netlify.app' : '';
+
 const networkFirstFiles = [
     '/',
     '/index.html',
@@ -28,7 +31,7 @@ const urlsToCache = [
     '/gamepad.js',
     '/loading-ring.js',
     '/images/bearing.gif',
-    '/api/serve-game/scph5501.bin?key=bios',
+    `${baseUrl}/api/serve-game/scph5501.bin?key=bios`,
     '/images/NSK_Warrior_title.mp4',
     '/images/title.avif',
     '/images/save-placeholder.png',
@@ -67,7 +70,7 @@ const urlsToCache = [
 
 const offlineReadyFiles = [
     ...urlsToCache,
-    '/api/serve-game/RPG_Maker_USA.zip?key=rom'
+    `${baseUrl}/api/serve-game/RPG_Maker_USA.zip?key=rom`
 ];
 
 async function areOfflineReadyFilesCached() {
