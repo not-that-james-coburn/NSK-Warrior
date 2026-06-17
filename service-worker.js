@@ -1,5 +1,5 @@
 const APP_CACHE = 'nsk-warrior-cache-v020';
-const isTauri = self.location.hostname === 'tauri.localhost' || self.location.protocol === 'tauri:';
+const isTauri = typeof self !== 'undefined' && self.location && (self.location.hostname === 'tauri.localhost' || self.location.protocol === 'tauri:');
 const baseUrl = isTauri ? 'https://nsk-warrior.netlify.app' : '';
 
 const networkFirstFiles = [
@@ -97,7 +97,7 @@ async function notifyClientsWhenOfflineReady() {
     });
 }
 
-self.addEventListener('install', event => {
+if (typeof self !== 'undefined') self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(APP_CACHE).then(cache => {
             // Silently fail on individual files to prevent the whole install from breaking
@@ -116,7 +116,7 @@ self.addEventListener('install', event => {
     );
 });
 
-self.addEventListener('activate', event => {
+if (typeof self !== 'undefined') self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys => {
             return Promise.all(
@@ -129,7 +129,7 @@ self.addEventListener('activate', event => {
     );
 });
 
-self.addEventListener('message', event => {
+if (typeof self !== 'undefined') self.addEventListener('message', event => {
     if (!event.data) return;
 
     if (event.data.type === 'CHECK_OFFLINE_READY') {
@@ -142,7 +142,7 @@ self.addEventListener('message', event => {
     }
 });
 
-self.addEventListener('fetch', event => {
+if (typeof self !== 'undefined') self.addEventListener('fetch', event => {
     const requestUrl = new URL(event.request.url);
     const decodedPath = decodeURI(requestUrl.pathname);
     
