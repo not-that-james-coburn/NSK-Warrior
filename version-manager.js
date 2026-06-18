@@ -3,7 +3,7 @@
  */
 
 // --- 1. CONFIGURATION ---
-const isTauri = typeof window !== 'undefined' && (window.location.hostname === 'tauri.localhost' || window.location.protocol === 'tauri:');
+const isTauri = typeof window !== 'undefined' && window.location && (window.location.hostname === 'tauri.localhost' || window.location.protocol === 'tauri:');
 const baseUrl = isTauri ? 'https://nsk-warrior.netlify.app' : '';
 
 const APP_CONFIG = {
