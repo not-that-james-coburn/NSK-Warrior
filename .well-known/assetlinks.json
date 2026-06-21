@@ -3,6 +3,6 @@
   "target": {
     "namespace": "android_app",
     "package_name": "app.netlify.nsk_warrior.twa",
-    "sha256_cert_fingerprints": ["F0:D2:00:CF:9E:1A:66:C3:EF:3B:7F:46:59:9E:B8:0F:31:7F:5D:A2:E5:C6:85:2C:41:8A:F8:1E:E3:63:8B:B7"]
+    "sha256_cert_fingerprints": ["49:8C:C6:68:3A:7A:67:0F:42:BC:95:99:A4:FF:C7:D3:DF:FC:2E:C0:B7:B8:21:5F:E0:BF:99:A8:A1:C2:AC:BB"]
   }
 }]
