@@ -1,6 +1,7 @@
 const APP_CACHE = 'nsk-warrior-cache-v019';
 const networkFirstFiles = [
     '/',
+    '/.well-known/assetlinks.json',
     '/index.html',
     '/app.js',
     '/notification-manager.js',
