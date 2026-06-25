@@ -109,7 +109,7 @@ const callback = function(mutationsList, observer) {
         if (taskName && taskName !== myLoader.lastTaskName) {
             myLoader.lastTaskName = taskName;
             myLoader.resetForNewTask();
-            console.log(`[Loader] New task: "${taskName}"`);
+            console.debug(`[Loader] New task: "${taskName}"`);
             
             // Update task label immediately
             statusLabel.textContent = taskName;
@@ -133,7 +133,7 @@ const callback = function(mutationsList, observer) {
                 if ((canvas && canvas.offsetParent !== null) ||
                     (emulator && emulator.gameManager && !emulator.paused)) {
                     
-                    console.log('[Loader] Game started, hiding overlay');
+                    console.debug('[Loader] Game started, hiding overlay');
                     myLoader.hideOverlay();
                     clearInterval(emulatorReadyCheckInterval);
                     emulatorReadyCheckInterval = null;
@@ -143,7 +143,7 @@ const callback = function(mutationsList, observer) {
         }
     } else {
         // Loading element disappeared - game is taking over, hide overlay
-        console.log('[Loader] Loading element disappeared, hiding overlay');
+        console.debug('[Loader] Loading element disappeared, hiding overlay');
         myLoader.hideOverlay();
         if (emulatorReadyCheckInterval) clearInterval(emulatorReadyCheckInterval);
         emulatorReadyCheckInterval = null;

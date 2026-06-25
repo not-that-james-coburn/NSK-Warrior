@@ -155,7 +155,7 @@ self.addEventListener('fetch', event => {
                 // 1. Try Cache First
                 const cachedResponse = await cache.match(event.request, { ignoreVary: true, ignoreMethod: true });
                 if (cachedResponse) {
-                    console.log(`[SW] serving cached HEAD for: ${decodedPath}`);
+                    console.debug(`[SW] serving cached HEAD for: ${decodedPath}`);
                     return new Response(null, {
                         status: 200,
                         statusText: 'OK',
@@ -169,7 +169,7 @@ self.addEventListener('fetch', event => {
                     return networkResponse;
                 } catch (e) {
                     // Only return 404 if BOTH cache and network fail (Offline & Not Cached)
-                    console.log(`[SW] Offline and not cached: ${decodedPath}`);
+                    console.debug(`[SW] Offline and not cached: ${decodedPath}`);
                     return new Response(null, { status: 404, statusText: 'Offline' });
                 }
             }
@@ -180,7 +180,7 @@ self.addEventListener('fetch', event => {
                 const cachedResponse = await cache.match(event.request, { ignoreVary: true });
                 if (cachedResponse) return cachedResponse;
                 
-                console.log(`[SW] Downloading ROM: ${decodedPath}`);
+                console.debug(`[SW] Downloading ROM: ${decodedPath}`);
                 
                 // 2. Fetch from Network
                 try {
@@ -204,7 +204,7 @@ self.addEventListener('fetch', event => {
                     (async () => {
                         try {
                             await cache.put(event.request, responseForCache);
-                            console.log(`[SW] Caching complete: ${decodedPath}`);
+                            console.debug(`[SW] Caching complete: ${decodedPath}`);
                             await notifyClientsWhenOfflineReady();
                         } catch (err) {
                             console.warn(`[SW] Cache failed:`, err);
@@ -238,7 +238,7 @@ self.addEventListener('fetch', event => {
                 return networkResponse;
             })
             .catch(() => {
-                console.log(`[SW] Network failed for ${decodedPath}, checking cache...`);
+                console.debug(`[SW] Network failed for ${decodedPath}, checking cache...`);
                 return caches.match(event.request);
             })
         );

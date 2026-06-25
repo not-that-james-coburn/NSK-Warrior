@@ -5,7 +5,7 @@ export default async (request, context) => {
   const fileKey = url.searchParams.get("key"); 
 
   // --- DEBUG LOGGING (Check Netlify Function Logs if errors persist) ---
-  console.log(`[ServeGame] Request for key: ${fileKey}`);
+  console.debug(`[ServeGame] Request for key: ${fileKey}`);
   
   // --- SECURITY CHECK ---
   const referer = request.headers.get("referer");

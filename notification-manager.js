@@ -101,7 +101,7 @@ class NotificationManager {
   }
 
   showUpdateNotification(options = {}) {
-    console.log('showUpdateNotification called');
+    console.debug('showUpdateNotification called');
     const notification = document.createElement('div');
     notification.innerHTML = `
       <div id="update-notification" class="notice-toast notice-toast--panel">
@@ -146,7 +146,7 @@ class NotificationManager {
     if (this.safeGetItem(storageKey) === 'true') return Promise.resolve();
 
     this.safeSetItem(storageKey, 'true');
-    console.log('showOfflineReadyNotification called');
+    console.debug('showOfflineReadyNotification called');
 
     const notification = document.createElement('div');
     notification.innerHTML = `

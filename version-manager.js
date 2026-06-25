@@ -1267,7 +1267,7 @@ function injectExitButton() {
       
       // Append to the toolbar
       toolbar.appendChild(btn);
-      console.log("Custom Exit Button injected.");
+      console.debug("Custom Exit Button injected.");
     }
     
     // Stop trying after 10 seconds
@@ -1470,7 +1470,7 @@ async function launchGame(verId, slotNum) {
   window.EJS_color = "#000000";
   window.EJS_backgroundColor = "#000000";
   window.EJS_threads = (typeof SharedArrayBuffer !== 'undefined' && typeof Atomics !== 'undefined');
-  console.log("Threads enabled?", EJS_threads);
+  console.debug("Threads enabled?", EJS_threads);
   window.EJS_Buttons = { restart: false, fullscreen: false };
   window.EJS_defaultOptions = { 'save-state-location': 'browser' };
   window.EJS_DEBUG_XX = APP_CONFIG.debug;
