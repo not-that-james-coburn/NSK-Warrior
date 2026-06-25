@@ -8,6 +8,7 @@ const APP_CONFIG = {
   core: "mednafen_psx_hw",
   biosUrl: "/api/serve-game/scph5501.bin?key=bios",
   gameUrl: "/api/serve-game/RPG_Maker_USA.zip?key=rom",
+  debug: false,
   
   versions: {
     'og': {
@@ -1472,6 +1473,7 @@ async function launchGame(verId, slotNum) {
   console.log("Threads enabled?", EJS_threads);
   window.EJS_Buttons = { restart: false, fullscreen: false };
   window.EJS_defaultOptions = { 'save-state-location': 'browser' };
+  window.EJS_DEBUG_XX = APP_CONFIG.debug;
   
   let rawData = await getSaveBlob(uniqueId);
   if (rawData) {
