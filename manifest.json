@@ -3,89 +3,87 @@
     "short_name": "NSK Warrior",
     "description": "Fight the war on dirt as an aspiring janitor in a grimy factory in this comical, survival horror RPG game.",
     "start_url": "/index.html",
+    "lang": "en-US",
+    "dir": "ltr",
+    "id": "/index.html",
     "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#000000",
     "orientation": "any",
-    "icons": [
-        {
-            "src": "favicon.ico",
-            "sizes": "254x254",
-            "type": "image/png"
-        },
-        {
-            "purpose": "maskable",
-            "sizes": "512x512",
-            "src": "images/maskable_icon_x512.png",
-            "type": "image/png"
-        },
-        {
-            "src": "images/512x512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "images/144x144.png",
-            "sizes": "144x144",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "images/72x72.png",
-            "sizes": "72x72",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "images/192x192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "images/48x48.png",
-            "sizes": "48x48",
-            "type": "image/png",
-            "purpose": "any"
-        }
-    ],
-    "screenshots": [
-        {
-            "src": "images/title_screen.png",
-            "sizes": "1080x886",
-            "type": "image/png",
-            "form_factor": "wide",
-            "label": "A screenshot of the game title"
-        },
-        {
-            "src": "images/sick_screen.png",
-            "sizes": "1317x1080",
-            "type": "image/png",
-            "label": "Stay here where it is safe",
-            "form_factor": "wide"
-        },
-        {
-            "src": "images/jim_screen.png",
-            "sizes": "1317x1080",
-            "type": "image/png",
-            "label": "How can I become an NSK Warrior?",
-            "form_factor": "wide"
-        },
-        {
-            "src": "images/huh_screen.png",
-            "sizes": "1317x1080",
-            "type": "image/png",
-            "label": "Huh?",
-            "form_factor": "wide"
-        }
-    ],
     "categories": [
         "game",
         "rpg",
         "survival"
     ],
-    "lang": "en-US",
-    "dir": "ltr",
-    "id": "/?source=pwa"
+    "icons": [
+    {
+        "src": "favicon.ico",
+        "sizes": "254x254",
+        "type": "image/png"
+    },
+    {
+        "purpose": "maskable",
+        "sizes": "512x512",
+        "src": "images/maskable_icon_x512.png",
+        "type": "image/png"
+    },
+    {
+        "src": "images/512x512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any"
+    },
+    {
+        "src": "images/144x144.png",
+        "sizes": "144x144",
+        "type": "image/png",
+        "purpose": "any"
+    },
+    {
+        "src": "images/72x72.png",
+        "sizes": "72x72",
+        "type": "image/png",
+        "purpose": "any"
+    },
+    {
+        "src": "images/192x192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any"
+    },
+    {
+        "src": "images/48x48.png",
+        "sizes": "48x48",
+        "type": "image/png",
+        "purpose": "any"
+    }],
+    "screenshots": [
+    {
+        "src": "images/title_screen.png",
+        "sizes": "1080x886",
+        "type": "image/png",
+        "form_factor": "wide",
+        "label": "A screenshot of the game title"
+    },
+    {
+        "src": "images/sick_screen.png",
+        "sizes": "1317x1080",
+        "type": "image/png",
+        "label": "Stay here where it is safe",
+        "form_factor": "wide"
+    },
+    {
+        "src": "images/jim_screen.png",
+        "sizes": "1317x1080",
+        "type": "image/png",
+        "label": "How can I become an NSK Warrior?",
+        "form_factor": "wide"
+    },
+    {
+        "src": "images/huh_screen.png",
+        "sizes": "1317x1080",
+        "type": "image/png",
+        "label": "Huh?",
+        "form_factor": "wide"
+    }]
 }
