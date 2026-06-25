@@ -11,7 +11,7 @@
         {
             "src": "favicon.ico",
             "sizes": "254x254",
-            "type": "image/ico"
+            "type": "image/png"
         },
         {
             "purpose": "maskable",
@@ -62,19 +62,30 @@
             "src": "images/sick_screen.png",
             "sizes": "1317x1080",
             "type": "image/png",
-            "label": "Stay here where it is safe"
+            "label": "Stay here where it is safe",
+            "form_factor": "wide"
         },
         {
             "src": "images/jim_screen.png",
             "sizes": "1317x1080",
             "type": "image/png",
-            "label": "How can I become an NSK Warrior?"
+            "label": "How can I become an NSK Warrior?",
+            "form_factor": "wide"
         },
         {
             "src": "images/huh_screen.png",
             "sizes": "1317x1080",
             "type": "image/png",
-            "label": "Huh?"
+            "label": "Huh?",
+            "form_factor": "wide"
         }
-    ]
+    ],
+    "categories": [
+        "game",
+        "rpg",
+        "survival"
+    ],
+    "lang": "en-US",
+    "dir": "ltr",
+    "id": "/?source=pwa"
 }
