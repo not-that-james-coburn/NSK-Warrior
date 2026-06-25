@@ -28,7 +28,7 @@ const crossSVG = `
 
 // Define the initialization function globally
 window.initVirtualGamepad = function() {
-  console.log("Initializing Virtual Gamepad Customizations...");
+  console.debug("Initializing Virtual Gamepad Customizations...");
   
   function applyCustomStyles() {
     if (document.getElementById('custom-gamepad-styles')) return;

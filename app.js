@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
-      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      console.debug('ServiceWorker registration successful with scope: ', registration.scope);
 
       const reloadForApprovedUpdate = (reason) => {
         if (refreshingForUpdate) return;
@@ -21,7 +21,7 @@ if ('serviceWorker' in navigator) {
           updateReloadFallbackTimer = null;
         }
 
-        console.log(`${reason} — reloading for the approved service worker update.`);
+        console.debug(`${reason} — reloading for the approved service worker update.`);
         window.location.reload();
       };
 
@@ -68,16 +68,16 @@ if ('serviceWorker' in navigator) {
       // Helper to handle an installing worker's lifecycle
       const handleInstalling = (worker) => {
         if (!worker) return;
-        console.log('Service worker installing:', worker);
+        console.debug('Service worker installing:', worker);
         worker.addEventListener('statechange', () => {
-          console.log('Installing worker statechange:', worker.state);
+          console.debug('Installing worker statechange:', worker.state);
           if (worker.state === 'installed') {
             // If there's an active controller, this is an update (not first install)
             if (navigator.serviceWorker.controller) {
-              console.log('New service worker installed (update).');
+              console.debug('New service worker installed (update).');
               showUpdateAvailable(worker);
             } else {
-              console.log('Service worker installed for the first time (no prior controller).');
+              console.debug('Service worker installed for the first time (no prior controller).');
             }
           }
         });
@@ -85,7 +85,7 @@ if ('serviceWorker' in navigator) {
 
       // If there's already a waiting worker, treat that as an available update
       if (registration.waiting) {
-        console.log('Found waiting worker on register — treating as update.');
+        console.debug('Found waiting worker on register — treating as update.');
         showUpdateAvailable(registration.waiting);
       }
 
@@ -96,14 +96,14 @@ if ('serviceWorker' in navigator) {
 
       // Always attach updatefound to catch new installs — do this BEFORE update()
       registration.addEventListener('updatefound', () => {
-        console.log('updatefound fired on registration');
+        console.debug('updatefound fired on registration');
         handleInstalling(registration.installing);
       });
 
       // Check for updates before calling update() to avoid race.
       try {
         await registration.update();
-        console.log('registration.update() completed.');
+        console.debug('registration.update() completed.');
       } catch (err) {
         console.warn('registration.update() failed:', err);
       }
@@ -150,7 +150,7 @@ if ('serviceWorker' in navigator) {
         }
       }
     } catch (error) {
-      console.log('ServiceWorker registration failed: ', error);
+      console.error('ServiceWorker registration failed: ', error);
     }
   });
 }

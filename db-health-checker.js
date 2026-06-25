@@ -3,7 +3,7 @@
   const TARGET_DB = 'EmulatorJS-states'; 
   const REQUIRED_STORE = 'states';       
 
-  console.log("[Health Check] Checking database integrity...");
+  console.debug("[Health Check] Checking database integrity...");
 
   const req = window.indexedDB.open(TARGET_DB);
   let createdDummyDB = false;
@@ -21,7 +21,7 @@
     // It's empty, but that's normal. We need to delete it so the Emulator
     // can run its own creation logic properly.
     if (createdDummyDB) {
-      console.log("[Health Check] No existing DB found (Clean slate). Cleaning up check...");
+      console.debug("[Health Check] No existing DB found (Clean slate). Cleaning up check...");
       db.close();
       window.indexedDB.deleteDatabase(TARGET_DB); // Remove our dummy trace
       return;
@@ -36,17 +36,17 @@
       // Delete the broken DB and reload to force a fresh start
       const deleteReq = window.indexedDB.deleteDatabase(TARGET_DB);
       deleteReq.onsuccess = () => {
-        console.log("[Health Check] Corrupted DB deleted. Reloading to initialize...");
+        console.debug("[Health Check] Corrupted DB deleted. Reloading to initialize...");
         window.location.reload();
       };
     } else {
       // CASE C: DB exists and has the store. All good.
-      console.log("[Health Check] Database is healthy.");
+      console.debug("[Health Check] Database is healthy.");
       db.close();
     }
   };
 
   req.onerror = function(e) {
-    console.log("[Health Check] Could not open DB (Blocked or Private Mode).");
+    console.debug("[Health Check] Could not open DB (Blocked or Private Mode).");
   };
 })();
