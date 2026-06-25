@@ -167,7 +167,7 @@ async function getSaveBlob(uniqueId) {
 
 /**
  * Checks a list of potential legacy keys and returns the ones that exist.
- * FIX: Strictly ignores keys that match the current version's prefix.
+ * Strictly ignores keys that match the current version's prefix.
  */
 async function findAvailableLegacySaves(keysArray, currentPrefix) {
   if (!keysArray || keysArray.length === 0) return [];
@@ -182,7 +182,7 @@ async function findAvailableLegacySaves(keysArray, currentPrefix) {
     
     await Promise.all(keysArray.map(key => {
       return new Promise(resolve => {
-        // CRITICAL FIX: Ignore keys that belong to the current version
+        // Ignore keys that belong to the current version
         if (currentPrefix && key.includes(currentPrefix)) {
           // Skip this key, it's a current save slot, not legacy
           resolve();
@@ -237,7 +237,7 @@ async function loadScreenshot(key) {
 
 /**
  * Migrates a save from Legacy Name -> New Slot Name
- * FIX: Waits for transaction.oncomplete to prevent rollback before reload.
+ * Waits for transaction.oncomplete to prevent rollback before reload.
  */
 async function migrateLegacySave(legacyBaseName, targetBaseName) {
   const legacyFile = legacyBaseName + ".state";
@@ -250,7 +250,7 @@ async function migrateLegacySave(legacyBaseName, targetBaseName) {
       const tx = dbStates.transaction([STORE_STATES], 'readwrite');
       const store = tx.objectStore(STORE_STATES);
       
-      // CRITICAL FIX: Only resolve when the transaction is 100% done
+      // Only resolve when the transaction is 100% done
       tx.oncomplete = () => {
         console.log("State DB Transaction Committed.");
         resolve();

@@ -98,7 +98,7 @@ window.initVirtualGamepad = function() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
     const virtualGamepadRight = document.querySelector('.ejs_virtualGamepad_right');
     
-    // FIX: Check if elements exist BEFORE trying to access .style
+    // Check if elements exist BEFORE trying to access .style
     if (!virtualGamepadLeft || !virtualGamepadRight) return;
     
     // Load positions from local storage
