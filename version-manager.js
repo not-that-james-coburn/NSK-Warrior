@@ -1311,8 +1311,17 @@ function displayIcon(icon) {
 
 function goFullScreen() {
   const el = document.body;
-  const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-  if (requestFS) requestFS.call(el).catch(err => console.error('Fullscreen error:', err));
+  if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+    const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+    if (requestFS) {
+      requestFS.call(el).catch(err => console.error('Fullscreen error:', err));
+    }
+  } else {
+    const exitFS = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exitFS) {
+      exitFS.call(document).catch(err => console.error('Exit fullscreen error:', err));
+    }
+  }
 }
 
 async function performManualSave(targetId = null) {
@@ -1410,6 +1419,66 @@ window.EJS_onGameStart = async function(emulator) {
   if (window.initVirtualGamepad) {
     window.initVirtualGamepad();
   }
+
+  // Override EmulatorJS's fullscreen button logic to use our goFullScreen function
+  // which works on document.body instead of just the canvas
+  if (window.EJS_emulator && window.EJS_emulator.elements && window.EJS_emulator.elements.bottomBar) {
+    // Override the internal toggleFullscreen function
+    const originalToggle = window.EJS_emulator.toggleFullscreen;
+    window.EJS_emulator.toggleFullscreen = (enterFullscreen) => {
+      // Call our custom implementation
+      goFullScreen();
+
+      // Update the button visuals in the bottom bar
+      if (window.EJS_emulator.elements.bottomBar.fullscreen) {
+        const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
+        if (enterBtn && exitBtn) {
+          const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+
+          if (isFullscreen) {
+            exitBtn.style.display = "";
+            enterBtn.style.display = "none";
+          } else {
+            exitBtn.style.display = "none";
+            enterBtn.style.display = "";
+          }
+        }
+      }
+    };
+
+    // Sync initial visual state immediately when setting up the override
+    if (window.EJS_emulator.elements.bottomBar.fullscreen) {
+      const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
+      if (enterBtn && exitBtn) {
+        const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        if (isFullscreen) {
+          exitBtn.style.display = "";
+          enterBtn.style.display = "none";
+        } else {
+          exitBtn.style.display = "none";
+          enterBtn.style.display = "";
+        }
+      }
+    }
+
+    // We also need to listen for document.body fullscreen changes to keep the EJS buttons in sync
+    // since the original EJS listener only listens to e.target === this.elements.parent
+    document.addEventListener("fullscreenchange", () => {
+       if (window.EJS_emulator && window.EJS_emulator.elements && window.EJS_emulator.elements.bottomBar) {
+         const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
+         if (enterBtn && exitBtn) {
+           const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+           if (isFullscreen) {
+             exitBtn.style.display = "";
+             enterBtn.style.display = "none";
+           } else {
+             exitBtn.style.display = "none";
+             enterBtn.style.display = "";
+           }
+         }
+       }
+    });
+  }
 };
 
 // REFACTOR: Smart Hook - Check Save Location
@@ -1471,7 +1540,7 @@ async function launchGame(verId, slotNum) {
   window.EJS_backgroundColor = "#000000";
   window.EJS_threads = (typeof SharedArrayBuffer !== 'undefined' && typeof Atomics !== 'undefined');
   console.debug("Threads enabled?", EJS_threads);
-  window.EJS_Buttons = { restart: false, fullscreen: false };
+  window.EJS_Buttons = { restart: false };
   window.EJS_defaultOptions = { 'save-state-location': 'browser' };
   window.EJS_DEBUG_XX = APP_CONFIG.debug;
   
