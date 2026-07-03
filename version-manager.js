@@ -1463,7 +1463,7 @@ window.EJS_onGameStart = async function(emulator) {
 
     // We also need to listen for document.body fullscreen changes to keep the EJS buttons in sync
     // since the original EJS listener only listens to e.target === this.elements.parent
-    document.addEventListener("fullscreenchange", () => {
+    const syncFullscreenButton = () => {
        if (window.EJS_emulator && window.EJS_emulator.elements && window.EJS_emulator.elements.bottomBar) {
          const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
          if (enterBtn && exitBtn) {
@@ -1477,7 +1477,11 @@ window.EJS_onGameStart = async function(emulator) {
            }
          }
        }
-    });
+    };
+
+    document.addEventListener("fullscreenchange", syncFullscreenButton);
+    document.addEventListener("webkitfullscreenchange", syncFullscreenButton);
+    document.addEventListener("mozfullscreenchange", syncFullscreenButton);
   }
 };
 
