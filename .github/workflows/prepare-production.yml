@@ -1,0 +1,83 @@
+name: Prepare Production
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  prepare-production:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Modify version-manager.js
+        run: |
+          cat << 'JS_EOF' > update-config.cjs
+          const fs = require("fs");
+          let content = fs.readFileSync("version-manager.js", "utf8");
+
+          // 1. Set versionInfo to true for og, v1.1, kf
+          const targetVersions = ["og", "v1.1", "kf"];
+          for (const v of targetVersions) {
+            const regex = new RegExp(`('${v.replace(".", "\\.")}':\\s*\\{[\\s\\S]*?versionInfo:\\s*)false`, "g");
+            content = content.replace(regex, "$1true");
+          }
+
+          // 2. Comment out the "tp" block
+          const lines = content.split("\n");
+          let inTpBlock = false;
+          let bracketDepth = 0;
+
+          for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            if (line.match(/^\s*'tp':\s*\{/)) {
+              inTpBlock = true;
+            }
+
+            if (inTpBlock) {
+              // Count brackets to know when block ends
+              const openCount = (line.match(/\{/g) || []).length;
+              const closeCount = (line.match(/\}/g) || []).length;
+              bracketDepth += openCount - closeCount;
+
+              // Add comment
+              if (!line.trim().startsWith("//")) {
+                lines[i] = "// " + line;
+              }
+
+              // If we reach end of block (and the optional comma after it)
+              if (bracketDepth === 0 && closeCount > 0) {
+                inTpBlock = false;
+              }
+            }
+          }
+
+          fs.writeFileSync("version-manager.js", lines.join("\n"));
+          JS_EOF
+
+          node update-config.cjs
+          rm update-config.cjs
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add version-manager.js
+
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: prepare production config [skip ci]"
+            git push
+          fi
