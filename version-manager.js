@@ -8,6 +8,7 @@ const APP_CONFIG = {
   core: "mednafen_psx_hw",
   biosUrl: "/api/serve-game/scph5501.bin?key=bios",
   gameUrl: "/api/serve-game/RPG_Maker_USA.zip?key=rom",
+  debug: false,
   
   versions: {
     'og': {
@@ -16,7 +17,7 @@ const APP_CONFIG = {
       loadState: "/versions/original/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR", "NSK_WARRIOR_OG", "NSK_WARRIOR_OG_1", "NSK_WARRIOR_OG_2", "NSK_WARRIOR_OG_3", "NSK_WARRIOR_OG_4"],
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return "Original Version (2008)\n\nUnfiltered, unmodified.\nAll the nuances, quirks and occasional bugs of the first release.";
       },
@@ -27,7 +28,7 @@ const APP_CONFIG = {
       loadState: "/versions/v1.1/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR v1.1", "NSK_WARRIOR_v1.1", "NSK_WARRIOR_v1.1_1", "NSK_WARRIOR_v1.1_2", "NSK_WARRIOR_v1.1_3", "NSK_WARRIOR_v1.1_4"],
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return "Version 1.1 (2024)\n\nSame base game with a few additions. Notably:\n\n*Bug fixes\n*New Skills system";
       },
@@ -41,7 +42,7 @@ const APP_CONFIG = {
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
       update: "2.3",
-      versionInfo: true,
+      versionInfo: false,
       coverImage: null, //"/images/kf-cover.png",
       get infoMessage() {
         return {
@@ -50,7 +51,6 @@ const APP_CONFIG = {
         };
       },
     },
-    /*
     'tp': {
       label: "Test Play",
       prefix: "TEST_PLAY",
@@ -59,12 +59,11 @@ const APP_CONFIG = {
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
       update: "2.3", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests, Assembly door fix, bosses difficulty tweeked up
-      versionInfo: false,
+      versionInfo: true,
       get infoMessage() {
         return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding '\u{25EF}'\n\nUPDATED to v${this.update}`;
       },
     }
-    */
   }
 };
 
@@ -169,7 +168,7 @@ async function getSaveBlob(uniqueId) {
 
 /**
  * Checks a list of potential legacy keys and returns the ones that exist.
- * FIX: Strictly ignores keys that match the current version's prefix.
+ * Strictly ignores keys that match the current version's prefix.
  */
 async function findAvailableLegacySaves(keysArray, currentPrefix) {
   if (!keysArray || keysArray.length === 0) return [];
@@ -184,7 +183,7 @@ async function findAvailableLegacySaves(keysArray, currentPrefix) {
     
     await Promise.all(keysArray.map(key => {
       return new Promise(resolve => {
-        // CRITICAL FIX: Ignore keys that belong to the current version
+        // Ignore keys that belong to the current version
         if (currentPrefix && key.includes(currentPrefix)) {
           // Skip this key, it's a current save slot, not legacy
           resolve();
@@ -239,7 +238,7 @@ async function loadScreenshot(key) {
 
 /**
  * Migrates a save from Legacy Name -> New Slot Name
- * FIX: Waits for transaction.oncomplete to prevent rollback before reload.
+ * Waits for transaction.oncomplete to prevent rollback before reload.
  */
 async function migrateLegacySave(legacyBaseName, targetBaseName) {
   const legacyFile = legacyBaseName + ".state";
@@ -252,7 +251,7 @@ async function migrateLegacySave(legacyBaseName, targetBaseName) {
       const tx = dbStates.transaction([STORE_STATES], 'readwrite');
       const store = tx.objectStore(STORE_STATES);
       
-      // CRITICAL FIX: Only resolve when the transaction is 100% done
+      // Only resolve when the transaction is 100% done
       tx.oncomplete = () => {
         console.log("State DB Transaction Committed.");
         resolve();
@@ -1268,7 +1267,7 @@ function injectExitButton() {
       
       // Append to the toolbar
       toolbar.appendChild(btn);
-      console.log("Custom Exit Button injected.");
+      console.debug("Custom Exit Button injected.");
     }
     
     // Stop trying after 10 seconds
@@ -1312,8 +1311,17 @@ function displayIcon(icon) {
 
 function goFullScreen() {
   const el = document.body;
-  const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-  if (requestFS) requestFS.call(el).catch(err => console.error('Fullscreen error:', err));
+  if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+    const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+    if (requestFS) {
+      requestFS.call(el).catch(err => console.error('Fullscreen error:', err));
+    }
+  } else {
+    const exitFS = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exitFS) {
+      exitFS.call(document).catch(err => console.error('Exit fullscreen error:', err));
+    }
+  }
 }
 
 async function performManualSave(targetId = null) {
@@ -1411,6 +1419,70 @@ window.EJS_onGameStart = async function(emulator) {
   if (window.initVirtualGamepad) {
     window.initVirtualGamepad();
   }
+
+  // Override EmulatorJS's fullscreen button logic to use our goFullScreen function
+  // which works on document.body instead of just the canvas
+  if (window.EJS_emulator && window.EJS_emulator.elements && window.EJS_emulator.elements.bottomBar) {
+    // Override the internal toggleFullscreen function
+    const originalToggle = window.EJS_emulator.toggleFullscreen;
+    window.EJS_emulator.toggleFullscreen = (enterFullscreen) => {
+      // Call our custom implementation
+      goFullScreen();
+
+      // Update the button visuals in the bottom bar
+      if (window.EJS_emulator.elements.bottomBar.fullscreen) {
+        const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
+        if (enterBtn && exitBtn) {
+          const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+
+          if (isFullscreen) {
+            exitBtn.style.display = "";
+            enterBtn.style.display = "none";
+          } else {
+            exitBtn.style.display = "none";
+            enterBtn.style.display = "";
+          }
+        }
+      }
+    };
+
+    // Sync initial visual state immediately when setting up the override
+    if (window.EJS_emulator.elements.bottomBar.fullscreen) {
+      const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
+      if (enterBtn && exitBtn) {
+        const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        if (isFullscreen) {
+          exitBtn.style.display = "";
+          enterBtn.style.display = "none";
+        } else {
+          exitBtn.style.display = "none";
+          enterBtn.style.display = "";
+        }
+      }
+    }
+
+    // We also need to listen for document.body fullscreen changes to keep the EJS buttons in sync
+    // since the original EJS listener only listens to e.target === this.elements.parent
+    const syncFullscreenButton = () => {
+       if (window.EJS_emulator && window.EJS_emulator.elements && window.EJS_emulator.elements.bottomBar) {
+         const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
+         if (enterBtn && exitBtn) {
+           const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+           if (isFullscreen) {
+             exitBtn.style.display = "";
+             enterBtn.style.display = "none";
+           } else {
+             exitBtn.style.display = "none";
+             enterBtn.style.display = "";
+           }
+         }
+       }
+    };
+
+    document.addEventListener("fullscreenchange", syncFullscreenButton);
+    document.addEventListener("webkitfullscreenchange", syncFullscreenButton);
+    document.addEventListener("mozfullscreenchange", syncFullscreenButton);
+  }
 };
 
 // REFACTOR: Smart Hook - Check Save Location
@@ -1471,9 +1543,10 @@ async function launchGame(verId, slotNum) {
   window.EJS_color = "#000000";
   window.EJS_backgroundColor = "#000000";
   window.EJS_threads = (typeof SharedArrayBuffer !== 'undefined' && typeof Atomics !== 'undefined');
-  console.log("Threads enabled?", EJS_threads);
-  window.EJS_Buttons = { restart: false, fullscreen: false };
+  console.debug("Threads enabled?", EJS_threads);
+  window.EJS_Buttons = { restart: false };
   window.EJS_defaultOptions = { 'save-state-location': 'browser' };
+  window.EJS_DEBUG_XX = APP_CONFIG.debug;
   
   let rawData = await getSaveBlob(uniqueId);
   if (rawData) {

@@ -28,7 +28,7 @@ const crossSVG = `
 
 // Define the initialization function globally
 window.initVirtualGamepad = function() {
-  console.log("Initializing Virtual Gamepad Customizations...");
+  console.debug("Initializing Virtual Gamepad Customizations...");
   
   function applyCustomStyles() {
     if (document.getElementById('custom-gamepad-styles')) return;
@@ -98,7 +98,7 @@ window.initVirtualGamepad = function() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
     const virtualGamepadRight = document.querySelector('.ejs_virtualGamepad_right');
     
-    // FIX: Check if elements exist BEFORE trying to access .style
+    // Check if elements exist BEFORE trying to access .style
     if (!virtualGamepadLeft || !virtualGamepadRight) return;
     
     // Load positions from local storage

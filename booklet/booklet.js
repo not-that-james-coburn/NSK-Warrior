@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 const bWrapper = document.getElementById('button-wrapper');
 
-// Show manual button (todo: and exit button) on page click
+// Show manual button on page click
 function restartButtonAnimation() {
     bWrapper.style.animation = 'none';
     void bWrapper.offsetWidth;
