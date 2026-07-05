@@ -722,6 +722,7 @@ function bookHandler(action) {
 
 // --- 3. UNIFIED NAVIGATION HANDLER ---
 
+if (typeof window !== 'undefined') {
 window.addEventListener('popstate', async (event) => {
   const state = event.state;
   const gameContainer = document.getElementById('game-container');
@@ -792,6 +793,7 @@ window.addEventListener('popstate', async (event) => {
     }
   }
 });
+}
 
 // --- 4. UI & MENU LOGIC ---
 
@@ -897,7 +899,7 @@ function createSVGBtn(icon, color, onClick) {
   return btn;
 }
 
-window.versionMenuOpen = false;
+if (typeof window !== 'undefined') window.versionMenuOpen = false;
 
 function transitionToVersions(mode) {
   globalMode = mode;
@@ -1406,7 +1408,7 @@ async function performManualLoad(targetId = null) {
   } catch (err) { console.error("Error loading:", err); }
 }
 
-window.EJS_onGameStart = async function(emulator) {
+if (typeof window !== 'undefined') window.EJS_onGameStart = async function(emulator) {
   window.history.pushState({ gameStart: true }, '', '#game');
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'hidden' && window.EJS_emulator.settings['save-state-location'] !== 'download') {
@@ -1486,7 +1488,7 @@ window.EJS_onGameStart = async function(emulator) {
 };
 
 // REFACTOR: Smart Hook - Check Save Location
-window.EJS_onSaveState = function(e) {
+if (typeof window !== 'undefined') window.EJS_onSaveState = function(e) {
   if (window.EJS_emulator.settings['save-state-location'] === 'download') {
     performManualSave(); // Bypass Menu
     return true;
@@ -1496,7 +1498,7 @@ window.EJS_onSaveState = function(e) {
 };
 
 // REFACTOR: Smart Hook - Check Save Location
-window.EJS_onLoadState = function(e) {
+if (typeof window !== 'undefined') window.EJS_onLoadState = function(e) {
   if (window.EJS_emulator.settings['save-state-location'] === 'download') {
     performManualLoad(); // Bypass Menu
     return true;
@@ -1565,4 +1567,26 @@ async function launchGame(verId, slotNum) {
   document.body.appendChild(script);
 }
 
-document.addEventListener('DOMContentLoaded', initApp);
+
+// --- 7. ENVIRONMENT SETUP ---
+// Automatically configure settings for production vs development
+if (typeof window !== 'undefined' && window.location) {
+  const isProduction = window.location.hostname === 'nsk-warrior.netlify.app';
+  if (isProduction) {
+    // Enable version info for standard versions
+    const standardVersions = ['og', 'v1.1', 'kf'];
+    for (const v of standardVersions) {
+      if (APP_CONFIG.versions[v]) {
+        APP_CONFIG.versions[v].versionInfo = true;
+      }
+    }
+    // Remove test play version from production
+    if (APP_CONFIG.versions['tp']) {
+      delete APP_CONFIG.versions['tp'];
+    }
+  }
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', initApp);
+}
