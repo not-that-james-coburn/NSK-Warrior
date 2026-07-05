@@ -1,6 +1,5 @@
-[build]
+[context.production]
   command = "node prepare-production.js"
-  publish = "."
 
 # Allow the Edge Function to access the Blob store
 [[edge-functions]]
