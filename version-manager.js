@@ -350,19 +350,6 @@ async function deleteSaveState(keyName) {
   }
 }
 
-/**
- * Utility: Gets all keys belonging to a specific version prefix
- */
-async function getVersionKeys(prefix) {
-  const db = await openStateDB();
-  return new Promise(resolve => {
-    const tx = db.transaction([STORE_STATES], 'readonly');
-    const req = tx.objectStore(STORE_STATES).getAllKeys();
-    req.onsuccess = () => resolve(req.result.filter(k => k.startsWith(prefix) && k.endsWith('.state')));
-    req.onerror = () => resolve([]);
-  });
-}
-
 // --- HELPERS FOR BUNDLING ---
 
 function blobToBase64(data) {
@@ -922,24 +909,6 @@ function transitionToVersions(mode) {
     if (blur) blur.style = `display: block; z-index: 15`;
   }, 100);
   window.versionMenuOpen = true;
-}
-
-function resetToTitle() {
-  if (document.getElementById('game-container').style.display !== 'none') {
-    closeInGameMenu();
-    return;
-  }
-  
-  document.querySelectorAll('.save-slot-container').forEach(el => el.classList.remove('open'));
-  window.versionMenuOpen = false;
-  document.getElementById('version-menu').classList.remove('slide-in-down');
-  
-  const blur = document.getElementById('blurBackground');
-  if (blur) blur.style.display = 'none';
-  
-  setTimeout(() => {
-    document.getElementById('start-menu').classList.remove('slide-out-down');
-  }, 300);
 }
 
 function openInGameMenu(mode) {
