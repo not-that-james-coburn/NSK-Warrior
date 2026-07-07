@@ -1025,23 +1025,50 @@ async function renderSaveSlots(verId, container) {
     infoDiv.className = "infoDiv";
     infoDiv.style = "margin-right:10px;flex:1;width:70px;overflow-wrap:break-word";
     
-    let displayStatus = status;
     let importTargetKey = null;
+    let isLegacyFound = false;
     
     // 2. Logic: If slot is empty AND we have a legacy save in our "found" pile...
     if (status === "Empty" && foundLegacySaves.length > 0 && globalMode === 'PLAY') {
       // Grab the first available legacy save
       importTargetKey = foundLegacySaves.shift(); // Removes it from array so next slot gets the next one
-      let rawStatus = `Legacy Save Found: ${importTargetKey}`;
-      displayStatus = rawStatus.replace(/_/g, '_<wbr/>');
+      isLegacyFound = true;
     }
     
-    const dateDisplay = screenshotData?.created ?
-      screenshotData.created.replace(' ', '<br>') :
-      displayStatus;
+    const titleDiv = document.createElement('div');
+    titleDiv.style.fontWeight = 'bold';
+    titleDiv.style.fontSize = '0.9em';
+    titleDiv.textContent = `Slot ${i}`;
     
-    infoDiv.innerHTML = `<div style="font-weight:bold; font-size: 0.9em">Slot ${i}</div>
-                         <div style="font-size:0.7em; color:#aaa; line-height: 1.2;">${dateDisplay}</div>`;
+    const descDiv = document.createElement('div');
+    descDiv.style.fontSize = '0.7em';
+    descDiv.style.color = '#aaa';
+    descDiv.style.lineHeight = '1.2';
+
+    if (screenshotData?.created) {
+      const parts = screenshotData.created.split(' ');
+      parts.forEach((part, index) => {
+        descDiv.appendChild(document.createTextNode(part));
+        if (index < parts.length - 1) {
+          descDiv.appendChild(document.createElement('br'));
+        }
+      });
+    } else if (isLegacyFound) {
+      const rawStatus = `Legacy Save Found: ${importTargetKey}`;
+      const parts = rawStatus.split('_');
+      parts.forEach((part, index) => {
+        descDiv.appendChild(document.createTextNode(part));
+        if (index < parts.length - 1) {
+          descDiv.appendChild(document.createTextNode('_'));
+          descDiv.appendChild(document.createElement('wbr'));
+        }
+      });
+    } else {
+      descDiv.textContent = status;
+    }
+
+    infoDiv.appendChild(titleDiv);
+    infoDiv.appendChild(descDiv);
     
     // --- BUTTON LOGIC ---
     const actionBtn = document.createElement('button');
