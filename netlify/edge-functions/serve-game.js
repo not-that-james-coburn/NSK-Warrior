@@ -38,14 +38,18 @@ export default async (request, context) => {
       return new Response("File not found", { status: 404 });
     }
 
-    return new Response(blob, {
-      headers: {
-        "Content-Type": fileKey.endsWith(".zip") ? "application/zip" : "application/octet-stream",
-        "Content-Length": blob.size.toString(),
-        "Access-Control-Allow-Origin": "*", 
-        "Cache-Control": "public, max-age=31536000, immutable" 
-      }
-    });
+    const headers = {
+      "Content-Type": fileKey.endsWith(".zip") ? "application/zip" : "application/octet-stream",
+      "Content-Length": blob.size.toString(),
+      "Cache-Control": "public, max-age=31536000, immutable"
+    };
+
+    if (origin) {
+      headers["Access-Control-Allow-Origin"] = origin;
+      headers["Vary"] = "Origin";
+    }
+
+    return new Response(blob, { headers });
   } catch (error) {
     console.error(`[ServeGame] Error fetching blob:`, error);
     return new Response("Internal Server Error", { status: 500 });
