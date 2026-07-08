@@ -972,11 +972,20 @@ async function renderSaveSlots(verId, container) {
     foundLegacySaves = await findAvailableLegacySaves(config.legacyKeys, config.prefix);
   }
   
+  const slotPromises = [];
   for (let i = 1; i <= config.slots; i++) {
     const uniqueId = `${config.prefix}_${i}`;
-    const status = await getSlotInfo(config.prefix, i);
-    const screenshotData = await loadScreenshot(uniqueId);
-    
+    slotPromises.push(Promise.all([
+      i,
+      uniqueId,
+      getSlotInfo(config.prefix, i),
+      loadScreenshot(uniqueId)
+    ]));
+  }
+
+  const slotResults = await Promise.all(slotPromises);
+
+  for (const [i, uniqueId, status, screenshotData] of slotResults) {
     const row = document.createElement('div');
     row.className = 'slot-row';
     
