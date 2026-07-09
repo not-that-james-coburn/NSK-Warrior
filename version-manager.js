@@ -17,7 +17,7 @@ const APP_CONFIG = {
       loadState: "/versions/original/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR", "NSK_WARRIOR_OG", "NSK_WARRIOR_OG_1", "NSK_WARRIOR_OG_2", "NSK_WARRIOR_OG_3", "NSK_WARRIOR_OG_4"],
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return "Original Version (2008)\n\nUnfiltered, unmodified.\nAll the nuances, quirks and occasional bugs of the first release.";
       },
@@ -28,7 +28,7 @@ const APP_CONFIG = {
       loadState: "/versions/v1.1/RPG Maker (USA).state",
       slots: 8,
       legacyKeys: ["NSK WARRIOR v1.1", "NSK_WARRIOR_v1.1", "NSK_WARRIOR_v1.1_1", "NSK_WARRIOR_v1.1_2", "NSK_WARRIOR_v1.1_3", "NSK_WARRIOR_v1.1_4"],
-      versionInfo: true,
+      versionInfo: false,
       get infoMessage() {
         return "Version 1.1 (2024)\n\nSame base game with a few additions. Notably:\n\n*Bug fixes\n*New Skills system";
       },
@@ -42,7 +42,7 @@ const APP_CONFIG = {
       versionAlert: false,
       alertMessage: "Please wait for next update.\nComing soon!",
       update: "2.3",
-      versionInfo: true,
+      versionInfo: false,
       coverImage: null, //"/images/kf-cover.png",
       get infoMessage() {
         return {
@@ -51,19 +51,19 @@ const APP_CONFIG = {
         };
       },
     },
-//     'tp': {
-//       label: "Test Play",
-//       prefix: "TEST_PLAY",
-//       loadState: "/versions/test-play/RPG Maker (USA).state",
-//       slots: 8,
-//       versionAlert: false,
-//       alertMessage: "Please wait for next update.\nComing soon!",
-//       update: "2.3", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests, Assembly door fix, bosses difficulty tweeked up
-//       versionInfo: true,
-//       get infoMessage() {
-//         return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding '\u{25EF}'\n\nUPDATED to v${this.update}`;
-//       },
-//     }
+    'tp': {
+      label: "Test Play",
+      prefix: "TEST_PLAY",
+      loadState: "/versions/test-play/RPG Maker (USA).state",
+      slots: 8,
+      versionAlert: false,
+      alertMessage: "Please wait for next update.\nComing soon!",
+      update: "2.3", // Cart, Cramalot, Assembly Cart cinematic, Filter rooms, Assembly quests, Assembly door fix, bosses difficulty tweeked up
+      versionInfo: true,
+      get infoMessage() {
+        return `This version is for testing purposes.\n\n* Exit battles\n* Switch control\n* Clip walls by holding '\u{25EF}'\n\nUPDATED to v${this.update}`;
+      },
+    }
   }
 };
 
@@ -348,19 +348,6 @@ async function deleteSaveState(keyName) {
       tx.oncomplete = () => resolve();
     });
   }
-}
-
-/**
- * Utility: Gets all keys belonging to a specific version prefix
- */
-async function getVersionKeys(prefix) {
-  const db = await openStateDB();
-  return new Promise(resolve => {
-    const tx = db.transaction([STORE_STATES], 'readonly');
-    const req = tx.objectStore(STORE_STATES).getAllKeys();
-    req.onsuccess = () => resolve(req.result.filter(k => k.startsWith(prefix) && k.endsWith('.state')));
-    req.onerror = () => resolve([]);
-  });
 }
 
 // --- HELPERS FOR BUNDLING ---
@@ -723,76 +710,76 @@ function bookHandler(action) {
 // --- 3. UNIFIED NAVIGATION HANDLER ---
 
 if (typeof window !== 'undefined') {
-window.addEventListener('popstate', async (event) => {
-  const state = event.state;
-  const gameContainer = document.getElementById('game-container');
-  const isGameVisible = window.getComputedStyle(gameContainer).display !== 'none';
-  
-  // --- 1. HANDLE BOOKLET (Forward) ---
-  if (state && state.bookOpen) {
-    bookHandler('open');
-  }
-  
-  // --- 2. HANDLE IN-GAME MENU (Forward to #menu) ---
-  else if (state && state.menuOpen) {
-    // Re-open UI without pushing state again
-    document.querySelectorAll('.version-select-btn').forEach(btn => btn.style.display = 'none');
-    document.getElementById('ui-layer').style.display = 'flex';
+  window.addEventListener('popstate', async (event) => {
+    const state = event.state;
+    const gameContainer = document.getElementById('game-container');
+    const isGameVisible = window.getComputedStyle(gameContainer).display !== 'none';
     
-    // Use the mode saved in history, or default to SAVE
-    transitionToVersions(state.mode || 'SAVE');
-    
-    if (currentGameVersion) {
-      const container = document.getElementById(`slots-${currentGameVersion}`);
-      renderSaveSlots(currentGameVersion, container);
+    // --- 1. HANDLE BOOKLET (Forward) ---
+    if (state && state.bookOpen) {
+      bookHandler('open');
     }
     
-    // Close Booklet if open
-    bookHandler('close');
-  }
-  
-  // --- 3. HANDLE GAME (Back to #game) ---
-  else if (state && state.gameStart) {
-    // If we came back to the game, ensure overlays are closed
-    
-    // A. Close Booklet if open
-    bookHandler('close');
-    
-    // B. Close In-Game Menu if open
-    if (window.versionMenuOpen) {
-      closeInGameMenu();
-    }
-  }
-  
-  // --- 4. HANDLE EXIT / ROOT ---
-  else {
-    if (toggleButton.checked) {
-      bookHandler('close');
-      return
+    // --- 2. HANDLE IN-GAME MENU (Forward to #menu) ---
+    else if (state && state.menuOpen) {
+      // Re-open UI without pushing state again
+      document.querySelectorAll('.version-select-btn').forEach(btn => btn.style.display = 'none');
+      document.getElementById('ui-layer').style.display = 'flex';
       
-    } else {
-      // Exit Prompt Logic
-      if (isGameVisible) {
-        const msg = (window.EJS_emulator.settings['save-state-location'] !== 'download') ?
-          "Save and Exit?" :
-          "Exit? Progress will NOT be saved.";
-        
-        showModal(msg, 'confirm').then(async (shouldExit) => {
-          if (!shouldExit) {
-            window.history.pushState({ gameStart: true }, '', '#game');
-            return;
-          }
-          
-          if (window.EJS_emulator.settings['save-state-location'] !== 'download') {
-            console.log('Back navigation detected. Saving...');
-            try { await performManualSave(); } catch (err) { console.error("Save failed:", err); }
-          }
-          window.location.reload();
-        });
+      // Use the mode saved in history, or default to SAVE
+      transitionToVersions(state.mode || 'SAVE');
+      
+      if (currentGameVersion) {
+        const container = document.getElementById(`slots-${currentGameVersion}`);
+        renderSaveSlots(currentGameVersion, container);
+      }
+      
+      // Close Booklet if open
+      bookHandler('close');
+    }
+    
+    // --- 3. HANDLE GAME (Back to #game) ---
+    else if (state && state.gameStart) {
+      // If we came back to the game, ensure overlays are closed
+      
+      // A. Close Booklet if open
+      bookHandler('close');
+      
+      // B. Close In-Game Menu if open
+      if (window.versionMenuOpen) {
+        closeInGameMenu();
       }
     }
-  }
-});
+    
+    // --- 4. HANDLE EXIT / ROOT ---
+    else {
+      if (toggleButton.checked) {
+        bookHandler('close');
+        return
+        
+      } else {
+        // Exit Prompt Logic
+        if (isGameVisible) {
+          const msg = (window.EJS_emulator.settings['save-state-location'] !== 'download') ?
+            "Save and Exit?" :
+            "Exit? Progress will NOT be saved.";
+          
+          showModal(msg, 'confirm').then(async (shouldExit) => {
+            if (!shouldExit) {
+              window.history.pushState({ gameStart: true }, '', '#game');
+              return;
+            }
+            
+            if (window.EJS_emulator.settings['save-state-location'] !== 'download') {
+              console.log('Back navigation detected. Saving...');
+              try { await performManualSave(); } catch (err) { console.error("Save failed:", err); }
+            }
+            window.location.reload();
+          });
+        }
+      }
+    }
+  });
 }
 
 // --- 4. UI & MENU LOGIC ---
@@ -924,24 +911,6 @@ function transitionToVersions(mode) {
   window.versionMenuOpen = true;
 }
 
-function resetToTitle() {
-  if (document.getElementById('game-container').style.display !== 'none') {
-    closeInGameMenu();
-    return;
-  }
-  
-  document.querySelectorAll('.save-slot-container').forEach(el => el.classList.remove('open'));
-  window.versionMenuOpen = false;
-  document.getElementById('version-menu').classList.remove('slide-in-down');
-  
-  const blur = document.getElementById('blurBackground');
-  if (blur) blur.style.display = 'none';
-  
-  setTimeout(() => {
-    document.getElementById('start-menu').classList.remove('slide-out-down');
-  }, 300);
-}
-
 function openInGameMenu(mode) {
   const s1 = document.getElementById("slide1");
   const s2 = document.getElementById("slide2");
@@ -1003,11 +972,20 @@ async function renderSaveSlots(verId, container) {
     foundLegacySaves = await findAvailableLegacySaves(config.legacyKeys, config.prefix);
   }
   
+  const slotPromises = [];
   for (let i = 1; i <= config.slots; i++) {
     const uniqueId = `${config.prefix}_${i}`;
-    const status = await getSlotInfo(config.prefix, i);
-    const screenshotData = await loadScreenshot(uniqueId);
-    
+    slotPromises.push(Promise.all([
+      i,
+      uniqueId,
+      getSlotInfo(config.prefix, i),
+      loadScreenshot(uniqueId)
+    ]));
+  }
+
+  const slotResults = await Promise.all(slotPromises);
+
+  for (const [i, uniqueId, status, screenshotData] of slotResults) {
     const row = document.createElement('div');
     row.className = 'slot-row';
     
@@ -1025,23 +1003,50 @@ async function renderSaveSlots(verId, container) {
     infoDiv.className = "infoDiv";
     infoDiv.style = "margin-right:10px;flex:1;width:70px;overflow-wrap:break-word";
     
-    let displayStatus = status;
     let importTargetKey = null;
+    let isLegacyFound = false;
     
     // 2. Logic: If slot is empty AND we have a legacy save in our "found" pile...
     if (status === "Empty" && foundLegacySaves.length > 0 && globalMode === 'PLAY') {
       // Grab the first available legacy save
       importTargetKey = foundLegacySaves.shift(); // Removes it from array so next slot gets the next one
-      let rawStatus = `Legacy Save Found: ${importTargetKey}`;
-      displayStatus = rawStatus.replace(/_/g, '_<wbr/>');
+      isLegacyFound = true;
     }
     
-    const dateDisplay = screenshotData?.created ?
-      screenshotData.created.replace(' ', '<br>') :
-      displayStatus;
+    const titleDiv = document.createElement('div');
+    titleDiv.style.fontWeight = 'bold';
+    titleDiv.style.fontSize = '0.9em';
+    titleDiv.textContent = `Slot ${i}`;
     
-    infoDiv.innerHTML = `<div style="font-weight:bold; font-size: 0.9em">Slot ${i}</div>
-                         <div style="font-size:0.7em; color:#aaa; line-height: 1.2;">${dateDisplay}</div>`;
+    const descDiv = document.createElement('div');
+    descDiv.style.fontSize = '0.7em';
+    descDiv.style.color = '#aaa';
+    descDiv.style.lineHeight = '1.2';
+    
+    if (screenshotData?.created) {
+      const parts = screenshotData.created.split(' ');
+      parts.forEach((part, index) => {
+        descDiv.appendChild(document.createTextNode(part));
+        if (index < parts.length - 1) {
+          descDiv.appendChild(document.createElement('br'));
+        }
+      });
+    } else if (isLegacyFound) {
+      const rawStatus = `Legacy Save Found: ${importTargetKey}`;
+      const parts = rawStatus.split('_');
+      parts.forEach((part, index) => {
+        descDiv.appendChild(document.createTextNode(part));
+        if (index < parts.length - 1) {
+          descDiv.appendChild(document.createTextNode('_'));
+          descDiv.appendChild(document.createElement('wbr'));
+        }
+      });
+    } else {
+      descDiv.textContent = status;
+    }
+    
+    infoDiv.appendChild(titleDiv);
+    infoDiv.appendChild(descDiv);
     
     // --- BUTTON LOGIC ---
     const actionBtn = document.createElement('button');
@@ -1421,7 +1426,7 @@ if (typeof window !== 'undefined') window.EJS_onGameStart = async function(emula
   if (window.initVirtualGamepad) {
     window.initVirtualGamepad();
   }
-
+  
   // Override EmulatorJS's fullscreen button logic to use our goFullScreen function
   // which works on document.body instead of just the canvas
   if (window.EJS_emulator && window.EJS_emulator.elements && window.EJS_emulator.elements.bottomBar) {
@@ -1430,13 +1435,13 @@ if (typeof window !== 'undefined') window.EJS_onGameStart = async function(emula
     window.EJS_emulator.toggleFullscreen = (enterFullscreen) => {
       // Call our custom implementation
       goFullScreen();
-
+      
       // Update the button visuals in the bottom bar
       if (window.EJS_emulator.elements.bottomBar.fullscreen) {
         const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
         if (enterBtn && exitBtn) {
           const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-
+          
           if (isFullscreen) {
             exitBtn.style.display = "";
             enterBtn.style.display = "none";
@@ -1447,7 +1452,7 @@ if (typeof window !== 'undefined') window.EJS_onGameStart = async function(emula
         }
       }
     };
-
+    
     // Sync initial visual state immediately when setting up the override
     if (window.EJS_emulator.elements.bottomBar.fullscreen) {
       const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
@@ -1462,25 +1467,25 @@ if (typeof window !== 'undefined') window.EJS_onGameStart = async function(emula
         }
       }
     }
-
+    
     // We also need to listen for document.body fullscreen changes to keep the EJS buttons in sync
     // since the original EJS listener only listens to e.target === this.elements.parent
     const syncFullscreenButton = () => {
-       if (window.EJS_emulator && window.EJS_emulator.elements && window.EJS_emulator.elements.bottomBar) {
-         const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
-         if (enterBtn && exitBtn) {
-           const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-           if (isFullscreen) {
-             exitBtn.style.display = "";
-             enterBtn.style.display = "none";
-           } else {
-             exitBtn.style.display = "none";
-             enterBtn.style.display = "";
-           }
-         }
-       }
+      if (window.EJS_emulator && window.EJS_emulator.elements && window.EJS_emulator.elements.bottomBar) {
+        const [enterBtn, exitBtn] = window.EJS_emulator.elements.bottomBar.fullscreen;
+        if (enterBtn && exitBtn) {
+          const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+          if (isFullscreen) {
+            exitBtn.style.display = "";
+            enterBtn.style.display = "none";
+          } else {
+            exitBtn.style.display = "none";
+            enterBtn.style.display = "";
+          }
+        }
+      }
     };
-
+    
     document.addEventListener("fullscreenchange", syncFullscreenButton);
     document.addEventListener("webkitfullscreenchange", syncFullscreenButton);
     document.addEventListener("mozfullscreenchange", syncFullscreenButton);
