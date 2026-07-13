@@ -1,6 +1,9 @@
 const notificationManager = window.notificationManager || new window.NotificationManager();
 window.notificationManager = notificationManager;
 
+// Disable context menu globally
+document.addEventListener('contextmenu', event => event.preventDefault());
+
 let refreshingForUpdate = false;
 let updateReloadRequested = false;
 let updateReloadFallbackTimer = null;
