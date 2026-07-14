@@ -91,8 +91,12 @@ window.initVirtualGamepad = function() {
   
   // Disable default actions
   document.addEventListener('contextmenu', (e) => e.preventDefault());
-  document.addEventListener('touchstart', (e) => e.preventDefault());
-  document.addEventListener('pointerdown', (e) => e.preventDefault());
+  document.addEventListener('touchstart', (e) => {
+    // Only prevent default if it's not a multi-touch gesture intended for zoom,
+    // although touch-action: none should handle that.
+    e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('pointerdown', (e) => e.preventDefault(), { passive: false });
   
   function applyStyles() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
