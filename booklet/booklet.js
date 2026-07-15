@@ -145,7 +145,9 @@ bWrapper.addEventListener('animationend', () => {
     isButtonAnimating = false;
 });
 
-document.body.addEventListener('click', (e) => {
+// Use pointerdown instead of click, because mobile clicks are synthetic events based on touchstart/touchend
+// which are now blocked for the document body during gameplay.
+document.body.addEventListener('pointerdown', (e) => {
     // 1. Define elements that should be IGNORED (Clicking these should NOT open the manual)
     const isInteractiveElement =
         e.target.closest('.select_button') || // The Version/Start/Continue buttons

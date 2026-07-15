@@ -98,8 +98,9 @@ window.initVirtualGamepad = function() {
     const isModal = e.target.closest('#custom-modal-overlay');
     const isUiLayer = e.target.closest('#ui-layer');
     const isEjsMenu = e.target.closest('.ejs_menu_parent') || e.target.closest('.ejs_menu_button');
+    const isGamepadDragHandle = e.target.closest('.ejs_virtualGamepad_left') || e.target.closest('.ejs_virtualGamepad_right');
 
-    return isBooklet || isModal || isUiLayer || isEjsMenu;
+    return isBooklet || isModal || isUiLayer || isEjsMenu || isGamepadDragHandle;
   }
 
   // Disable default actions globally, but allow them for our custom UI
