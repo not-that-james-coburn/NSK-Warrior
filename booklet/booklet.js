@@ -147,17 +147,10 @@ bWrapper.addEventListener('animationend', () => {
 
 // Use pointerdown instead of click, because mobile clicks are synthetic events based on touchstart/touchend
 // which are now blocked for the document body during gameplay.
-document.body.addEventListener('pointerdown', (e) => {
-    // 1. Define elements that should be IGNORED (Clicking these should NOT open the manual)
-    const isInteractiveElement =
-        e.target.closest('.select_button') || // The Version/Start/Continue buttons
-        e.target.closest('.save-slot-container') || // The Dropdown menus
-        e.target.closest('#button-wrapper') || // The Manual icon itself (let it handle its own click)
-        e.target.closest('.ejs_context_menu') || // EmulatorJS specific menus
-        e.target.closest('.ejs_menu_bar'); // EmulatorJS bars
-    
-    // 2. If we clicked any of those, do nothing.
-    if (isInteractiveElement) {
+// We bind directly to the book-container so tapping the game canvas doesn't trigger the animation.
+document.getElementById('book-container').addEventListener('pointerdown', (e) => {
+    // Let the toggle button handle its own click without restarting the animation.
+    if (e.target.closest('#button-wrapper')) {
         return;
     }
     const isPaused = getComputedStyle(bWrapper).animationPlayState === 'paused';
