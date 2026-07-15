@@ -148,7 +148,7 @@ window.initVirtualGamepad = function() {
       if (e.target !== element) return;
       
       // Stop bubbling so EmulatorJS doesn't interpret this as a tap to open the menu
-      e.stopPropagation();
+      e.stopImmediatePropagation();
 
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
