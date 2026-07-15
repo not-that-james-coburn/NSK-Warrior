@@ -98,9 +98,8 @@ window.initVirtualGamepad = function() {
     const isModal = e.target.closest('#custom-modal-overlay');
     const isUiLayer = e.target.closest('#ui-layer');
     const isEjsMenu = e.target.closest('.ejs_menu_parent') || e.target.closest('.ejs_menu_button');
-    const isGamepadDragHandle = e.target.closest('.ejs_virtualGamepad_left') || e.target.closest('.ejs_virtualGamepad_right');
 
-    return isBooklet || isModal || isUiLayer || isEjsMenu || isGamepadDragHandle;
+    return isBooklet || isModal || isUiLayer || isEjsMenu;
   }
 
   // Disable default actions globally, but allow them for our custom UI
@@ -147,9 +146,6 @@ window.initVirtualGamepad = function() {
     element.addEventListener('touchstart', (e) => {
       if (e.target !== element) return;
       
-      // Stop bubbling so EmulatorJS doesn't interpret this as a tap to open the menu
-      e.stopImmediatePropagation();
-
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
         isDragging = true;
