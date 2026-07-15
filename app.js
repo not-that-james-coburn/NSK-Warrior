@@ -1,8 +1,7 @@
 const notificationManager = window.notificationManager || new window.NotificationManager();
 window.notificationManager = notificationManager;
 
-// Disable context menu globally
-document.addEventListener('contextmenu', event => event.preventDefault());
+// Disable context menu globally (managed more specifically in gamepad.js now)
 
 let refreshingForUpdate = false;
 let updateReloadRequested = false;

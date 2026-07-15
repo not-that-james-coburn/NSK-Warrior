@@ -89,14 +89,31 @@ window.initVirtualGamepad = function() {
   }
   
   
-  // Disable default actions
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  // Determine if a touch event should be allowed (not prevented)
+  function shouldAllowTouch(e) {
+    if (!e.target) return false;
+
+    // Allow touch on specific interactive UI overlays
+    const isBooklet = e.target.closest('#book-container');
+    const isModal = e.target.closest('#custom-modal-overlay');
+    const isUiLayer = e.target.closest('#ui-layer');
+    const isEjsMenu = e.target.closest('.ejs_menu_parent') || e.target.closest('.ejs_menu_button');
+
+    return isBooklet || isModal || isUiLayer || isEjsMenu;
+  }
+
+  // Disable default actions globally, but allow them for our custom UI
+  document.addEventListener('contextmenu', (e) => {
+    if (!shouldAllowTouch(e)) e.preventDefault();
+  });
   document.addEventListener('touchstart', (e) => {
-    // Only prevent default if it's not a multi-touch gesture intended for zoom,
-    // although touch-action: none should handle that.
-    e.preventDefault();
+    if (!shouldAllowTouch(e)) {
+      e.preventDefault();
+    }
   }, { passive: false });
-  document.addEventListener('pointerdown', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('pointerdown', (e) => {
+    if (!shouldAllowTouch(e)) e.preventDefault();
+  }, { passive: false });
   
   function applyStyles() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
