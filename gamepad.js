@@ -111,7 +111,7 @@ window.initVirtualGamepad = function() {
     if (!shouldAllowTouch(e)) {
       e.preventDefault();
     }
-  }, { passive: false });
+  });
   document.addEventListener('pointerdown', (e) => {
     if (!shouldAllowTouch(e)) e.preventDefault();
   }, { passive: false });
