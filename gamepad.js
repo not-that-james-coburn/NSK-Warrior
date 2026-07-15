@@ -111,10 +111,10 @@ window.initVirtualGamepad = function() {
     if (!shouldAllowTouch(e)) {
       e.preventDefault();
     }
-  });
+  }, { passive: false });
   document.addEventListener('pointerdown', (e) => {
     if (!shouldAllowTouch(e)) e.preventDefault();
-  }, { passive: false });
+  });
   
   function applyStyles() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
