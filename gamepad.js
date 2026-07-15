@@ -147,6 +147,9 @@ window.initVirtualGamepad = function() {
     element.addEventListener('touchstart', (e) => {
       if (e.target !== element) return;
       
+      // Stop bubbling so EmulatorJS doesn't interpret this as a tap to open the menu
+      e.stopPropagation();
+
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
         isDragging = true;
