@@ -156,7 +156,8 @@ document.body.addEventListener('pointerdown', (e) => {
         e.target.closest('#button-wrapper') || // The Manual icon itself (let it handle its own click)
         e.target.closest('.ejs_context_menu') || // EmulatorJS specific menus
         e.target.closest('.ejs_menu_bar') || // EmulatorJS bars
-        e.target.closest('.ejs_virtualGamepad_parent'); // Gamepad controls
+        e.target.closest('.ejs_virtualGamepad_right'); // Gamepad controls
+        e.target.closest('.ejs_virtualGamepad_left'); // Gamepad controls
 
     // 2. If we clicked any of those, do nothing.
     if (isInteractiveElement) {
