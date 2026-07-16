@@ -1,6 +1,8 @@
 const notificationManager = window.notificationManager || new window.NotificationManager();
 window.notificationManager = notificationManager;
 
+// Disable context menu globally (managed more specifically in gamepad.js now)
+
 let refreshingForUpdate = false;
 let updateReloadRequested = false;
 let updateReloadFallbackTimer = null;

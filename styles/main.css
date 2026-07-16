@@ -13,6 +13,11 @@ html {
   color: white;
   overflow: hidden;
   font-family: system-ui, sans-serif;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .bg-layer { position: absolute; width: 100%; top: 50%; transform: translateY(-50%); max-width: 100vw; z-index: 0; opacity: 0.75; }
@@ -92,3 +97,15 @@ html {
 
 /* Dynamic modal content */
 .modal-image { max-width: 100%; max-height: 400px; margin: 15px 0; border-radius: 4px; }
+
+/* Overrides for EmulatorJS virtual gamepad to eliminate mobile haptics */
+#game,
+.ejs_virtualGamepad_parent,
+.ejs_virtualGamepad_button {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  touch-action: none !important;
+}

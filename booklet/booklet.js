@@ -145,15 +145,20 @@ bWrapper.addEventListener('animationend', () => {
     isButtonAnimating = false;
 });
 
-document.body.addEventListener('click', (e) => {
+// Use pointerdown instead of click, because mobile clicks are synthetic events based on touchstart/touchend
+// which are blocked on the game canvas.
+// Binding to the document body ensures it can receive events globally even when the game is rendering.
+document.body.addEventListener('pointerdown', (e) => {
     // 1. Define elements that should be IGNORED (Clicking these should NOT open the manual)
     const isInteractiveElement =
         e.target.closest('.select_button') || // The Version/Start/Continue buttons
         e.target.closest('.save-slot-container') || // The Dropdown menus
         e.target.closest('#button-wrapper') || // The Manual icon itself (let it handle its own click)
         e.target.closest('.ejs_context_menu') || // EmulatorJS specific menus
-        e.target.closest('.ejs_menu_bar'); // EmulatorJS bars
-    
+        e.target.closest('.ejs_menu_bar') || // EmulatorJS bars
+        e.target.closest('.ejs_virtualGamepad_left') || // Left Gamepad controls
+        e.target.closest('.ejs_virtualGamepad_right'); // Right Gamepad controls
+
     // 2. If we clicked any of those, do nothing.
     if (isInteractiveElement) {
         return;

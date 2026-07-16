@@ -89,10 +89,36 @@ window.initVirtualGamepad = function() {
   }
   
   
-  // Disable default actions
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
-  document.addEventListener('touchstart', (e) => e.preventDefault());
-  document.addEventListener('pointerdown', (e) => e.preventDefault());
+  // Determine if a touch event should be prevented
+  function shouldPreventTouch(e) {
+    if (!e.target) return false;
+
+    // We only want to prevent native browser touch actions (like long-press haptics)
+    // if the user is touching the game canvas or the virtual gamepad controls.
+    let isGameCanvas = e.target.closest('#game');
+    const isGamepadControl = e.target.closest('.ejs_virtualGamepad_button') || e.target.closest('.ejs_dpad_main');
+
+    // Do NOT prevent touch if the user is interacting with the EmulatorJS menu bar or popups,
+    // otherwise synthetic 'click' events will not fire on mobile.
+    if (e.target.closest('.ejs_menu_bar') || e.target.closest('.ejs_menu_parent') || e.target.closest('.ejs_context_menu')) {
+        isGameCanvas = false;
+    }
+
+    return isGameCanvas || isGamepadControl;
+  }
+
+  // Disable default actions only on the game canvas and gamepad controls
+  document.addEventListener('contextmenu', (e) => {
+    if (shouldPreventTouch(e)) e.preventDefault();
+  });
+  document.addEventListener('touchstart', (e) => {
+    if (shouldPreventTouch(e)) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+  document.addEventListener('pointerdown', (e) => {
+    if (shouldPreventTouch(e)) e.preventDefault();
+  }, { passive: false });
   
   function applyStyles() {
     const virtualGamepadLeft = document.querySelector('.ejs_virtualGamepad_left');
@@ -125,6 +151,9 @@ window.initVirtualGamepad = function() {
     element.addEventListener('touchstart', (e) => {
       if (e.target !== element) return;
       
+      // Stop bubbling so EmulatorJS doesn't interpret this as a tap to open the menu
+      e.stopPropagation();
+
       clearTimeout(longPressTimer);
       longPressTimer = setTimeout(() => {
         isDragging = true;
@@ -143,6 +172,7 @@ window.initVirtualGamepad = function() {
     });
     
     element.addEventListener('touchmove', (e) => {
+      e.stopPropagation();
       if (isDragging) {
         // Prevent default scrolling/zooming while dragging
         e.preventDefault();
@@ -173,6 +203,7 @@ window.initVirtualGamepad = function() {
     });
     
     element.addEventListener('touchend', (e) => {
+      e.stopPropagation();
       clearTimeout(longPressTimer);
       if (isDragging) {
         isDragging = false;
@@ -188,6 +219,7 @@ window.initVirtualGamepad = function() {
     });
     
     element.addEventListener('touchcancel', (e) => {
+      e.stopPropagation();
       clearTimeout(longPressTimer);
       if (isDragging) {
         isDragging = false;
