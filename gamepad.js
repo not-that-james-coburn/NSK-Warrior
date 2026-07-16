@@ -95,8 +95,14 @@ window.initVirtualGamepad = function() {
 
     // We only want to prevent native browser touch actions (like long-press haptics)
     // if the user is touching the game canvas or the virtual gamepad controls.
-    const isGameCanvas = e.target.closest('#game');
+    let isGameCanvas = e.target.closest('#game');
     const isGamepadControl = e.target.closest('.ejs_virtualGamepad_button') || e.target.closest('.ejs_dpad_main');
+
+    // Do NOT prevent touch if the user is interacting with the EmulatorJS menu bar or popups,
+    // otherwise synthetic 'click' events will not fire on mobile.
+    if (e.target.closest('.ejs_menu_bar') || e.target.closest('.ejs_menu_parent') || e.target.closest('.ejs_context_menu')) {
+        isGameCanvas = false;
+    }
 
     return isGameCanvas || isGamepadControl;
   }
