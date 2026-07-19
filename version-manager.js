@@ -672,12 +672,14 @@ function bookHandler(action) {
   
   if (action === 'open') {
     if (!toggleButton.checked) {
-      toggleButton.checked = true;
+      restartButtonAnimation();
+      
       if (blurBackground) blurBackground.style.display = 'block';
       if (bWrapper) bWrapper.style.animationPlayState = 'paused';
       if (book) {
         book.style.left = '0';
         book.style.animation = 'rollIn 0.7s ease forwards';
+        toggleButton.checked = true;
       }
       if (s1) s1.play();
       return true; // Action performed
