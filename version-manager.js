@@ -660,6 +660,8 @@ if (typeof window !== 'undefined') {
  * Handles the visual state of the booklet.
  * Returns TRUE if an action was performed (useful for stopping event chains).
  */
+let bookAnimationTimeout;
+
 function bookHandler(action) {
   const toggleButton = document.getElementById('toggleButton');
   const blurBackground = document.getElementById('blurBackground');
@@ -670,11 +672,24 @@ function bookHandler(action) {
   
   if (!toggleButton) return false;
   
+  // Clear any pending animation timeouts to prevent race conditions during rapid toggling
+  if (bookAnimationTimeout) {
+    clearTimeout(bookAnimationTimeout);
+    bookAnimationTimeout = null;
+  }
+
   if (action === 'open') {
     if (!toggleButton.checked) {
       toggleButton.checked = true;
+      restartButtonAnimation();
+      
       if (blurBackground) blurBackground.style.display = 'block';
-      if (bWrapper) bWrapper.style.animationPlayState = 'paused';
+      if (bWrapper) {
+        // Delay pausing so it slides in first
+        bookAnimationTimeout = setTimeout(() => {
+          bWrapper.style.animationPlayState = 'paused';
+        }, 700);
+      }
       if (book) {
         book.style.left = '0';
         book.style.animation = 'rollIn 0.7s ease forwards';
