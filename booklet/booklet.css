@@ -10,6 +10,11 @@
   animation: slide-in-wait-out 4s ease-in-out forwards 2s;
 }
 
+.button-locked-visible {
+  animation: none !important;
+  transform: translateX(90px) !important;
+}
+
 .toggle-button {
   display: none;
   /* Hides the checkbox */
