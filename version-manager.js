@@ -706,7 +706,7 @@ function bookHandler(action) {
       if (s2) s2.play();
       if (bWrapper) {
         bWrapper.classList.remove('button-locked-visible');
-        restartButtonAnimation(); // restart the animation so it can slide out
+        slideOutButtonAnimation(); // smooth exit without slide-in delay
       }
       if (book) {
         book.style.left = '-2200px';

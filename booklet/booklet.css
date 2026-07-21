@@ -70,6 +70,15 @@
   }
 }
 
+@keyframes slide-out-only {
+  0% {
+    transform: translateX(90px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 @keyframes slide-out {
   0% {
     transform: translateX(90px);

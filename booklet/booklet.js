@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             
         } else {
             bWrapper.classList.remove('button-locked-visible');
-            restartButtonAnimation(); // restart the animation so it can slide out
+            slideOutButtonAnimation(); // smooth exit without slide-in delay
             book.style.left = '-2200px';
             book.style.animation = 'rollOut 0.7s ease forwards';
             document.getElementById("slide2").play();
@@ -139,6 +139,12 @@ function restartButtonAnimation() {
     bWrapper.style.animation = 'none';
     void bWrapper.offsetWidth;
     bWrapper.style.animation = 'slide-in-wait-out 4s ease-in-out forwards';
+}
+
+function slideOutButtonAnimation() {
+    bWrapper.style.animation = 'none';
+    void bWrapper.offsetWidth;
+    bWrapper.style.animation = 'slide-out-only 0.5s ease-in-out forwards';
 }
 
 let isButtonAnimating = true;
