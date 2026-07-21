@@ -115,13 +115,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if (toggleButton.checked) {
             window.history.pushState({ bookOpen: true }, '', '#booklet');
             blurBackground.style = `display: block; z-index: 30;`;
-            bWrapper.style.animationPlayState = 'paused';
+            bWrapper.classList.add('button-locked-visible');
             book.style.left = '0';
             book.style.animation = 'rollIn 0.7s ease forwards';
             document.getElementById("slide1").play();
             
         } else {
-            bWrapper.style.animationPlayState = 'running';
+            bWrapper.classList.remove('button-locked-visible');
+            restartButtonAnimation(); // restart the animation so it can slide out
             book.style.left = '-2200px';
             book.style.animation = 'rollOut 0.7s ease forwards';
             document.getElementById("slide2").play();
@@ -163,17 +164,9 @@ document.body.addEventListener('pointerdown', (e) => {
     if (isInteractiveElement) {
         return;
     }
-    const toggleButton = document.getElementById('toggleButton');
-    const isPaused = getComputedStyle(bWrapper).animationPlayState === 'paused';
-    if (!isButtonAnimating && !isPaused) {
+    const isLocked = bWrapper.classList.contains('button-locked-visible');
+    if (!isButtonAnimating && !isLocked) {
         isButtonAnimating = true;
         restartButtonAnimation();
-
-        // If the booklet is open, we need to pause the animation so the button stays on screen
-        if (toggleButton && toggleButton.checked) {
-            setTimeout(() => {
-                bWrapper.style.animationPlayState = 'paused';
-            }, 700);
-        }
     }
 });
