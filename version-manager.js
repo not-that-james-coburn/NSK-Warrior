@@ -696,6 +696,15 @@ function bookHandler(action) {
       }
       if (s1) s1.play();
       return true; // Action performed
+    } else {
+      // Edge case for resume on itch.io where button is checked but animation was lost
+      restartButtonAnimation();
+      if (bWrapper) {
+        bookAnimationTimeout = setTimeout(() => {
+          bWrapper.style.animationPlayState = 'paused';
+        }, 700);
+      }
+      return true;
     }
   }
   
