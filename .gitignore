@@ -2,6 +2,9 @@ node_modules/
 npm-debug.log*
 .DS_Store
 
+# Log files
+*.log
+
 # Native build outputs
 android/.gradle/
 android/app/build/

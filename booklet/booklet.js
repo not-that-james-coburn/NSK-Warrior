@@ -163,9 +163,17 @@ document.body.addEventListener('pointerdown', (e) => {
     if (isInteractiveElement) {
         return;
     }
+    const toggleButton = document.getElementById('toggleButton');
     const isPaused = getComputedStyle(bWrapper).animationPlayState === 'paused';
     if (!isButtonAnimating && !isPaused) {
         isButtonAnimating = true;
         restartButtonAnimation();
+
+        // If the booklet is open, we need to pause the animation so the button stays on screen
+        if (toggleButton && toggleButton.checked) {
+            setTimeout(() => {
+                bWrapper.style.animationPlayState = 'paused';
+            }, 700);
+        }
     }
 });
