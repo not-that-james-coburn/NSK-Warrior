@@ -681,14 +681,10 @@ function bookHandler(action) {
   if (action === 'open') {
     if (!toggleButton.checked) {
       toggleButton.checked = true;
-      restartButtonAnimation();
       
       if (blurBackground) blurBackground.style.display = 'block';
       if (bWrapper) {
-        // Delay pausing so it slides in first
-        bookAnimationTimeout = setTimeout(() => {
-          bWrapper.style.animationPlayState = 'paused';
-        }, 700);
+        bWrapper.classList.add('button-locked-visible');
       }
       if (book) {
         book.style.left = '0';
@@ -697,14 +693,10 @@ function bookHandler(action) {
       if (s1) s1.play();
       return true; // Action performed
     } else {
-      // Edge case for resume on itch.io where button is checked but animation was lost
-      restartButtonAnimation();
+      // Itch.io resume fallback: if state is open, enforce the button class
       if (bWrapper) {
-        bookAnimationTimeout = setTimeout(() => {
-          bWrapper.style.animationPlayState = 'paused';
-        }, 700);
+        bWrapper.classList.add('button-locked-visible');
       }
-      return true;
     }
   }
   
@@ -712,7 +704,10 @@ function bookHandler(action) {
     if (toggleButton.checked) {
       toggleButton.checked = false;
       if (s2) s2.play();
-      if (bWrapper) bWrapper.style.animationPlayState = 'running';
+      if (bWrapper) {
+        bWrapper.classList.remove('button-locked-visible');
+        slideOutButtonAnimation(); // smooth exit without slide-in delay
+      }
       if (book) {
         book.style.left = '-2200px';
         book.style.animation = 'rollOut 0.7s ease forwards';
