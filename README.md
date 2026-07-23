@@ -46,12 +46,6 @@ The game is also available at [itch.io](https://imaginary-monkey.itch.io/nsk-war
 
 ![demo of booklet](images/booklet.avif)
 
-## Version Manager
-The **Version Manager** allows players to customize their game experience before loading the emulator:
-- **Version Selection:** Choose between different game releases or testing branches seamlessly.
-- **Save Slot Management:** Easily pick which save slot to use before jumping in.
-- **Save State Tools:** Import saves from other devices, share your current progress, or delete old saves natively using emulator save states.
-
 ## Booklet
 To add a game booklet to your project:
 - Copy the booklet folder to your project.
@@ -93,7 +87,7 @@ To add a game booklet to your project:
   <audio id="flip" src="booklet/sounds/page_turn.mp3"></audio>
   <audio id="slide1" src="booklet/sounds/slide_in.mp3"></audio>
   <audio id="slide2" src="booklet/sounds/slide_out.mp3"></audio>
-  <div id="blurBackground" class="blurred-background display-none"></div>
+  <div id="blurBackground" class="blurred-background" style="display: none;"></div>
   ```
 
 ## License 
