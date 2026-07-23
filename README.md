@@ -53,7 +53,7 @@ To add a game booklet to your project:
   ```html
   <head>
   ...
-    <link rel="stylesheet" href="booklet/booklet.css">
+    <link rel="stylesheet" href="/booklet/booklet.css">
   ...
   </head>
   ...
@@ -67,19 +67,25 @@ To add a game booklet to your project:
   ```
 - Insert something like this in your html:
   ```html
-  <div class="container" id="container"> <!-- Add container styles to your css -->
-    <input type="checkbox" id="toggleButton" class="toggle-button">
-    <label for="toggleButton">
-      <img src="images/manual_icon.webp" width="40" height="40" alt="Game Booklet">
-    </label>
+  <div id="book-container"> <!-- Add container styles to your css -->
     <div id="book">
       <!-- Pages added here from script -->
     </div>
+    <div class="button-wrapper" id="button-wrapper">
+      <input type="checkbox" id="toggleButton" class="toggle-button">
+      <label for="toggleButton">
+        <img src="booklet/manual_icon.webp" width="40" height="40" alt="Game Booklet">
+      </label>
+    </div>
+  </div>
+
+  <div id="game-container">
     <div id="game"></div> <!-- Or whatever the div that displays your game is called -->
   </div>
-  <audio id="flip" src="sound/page_turn.mp3"></audio>
-  <audio id="slide1" src="sound/slide_in.mp3"></audio>
-  <audio id="slide2" src="sound/slide_out.mp3"></audio>
+
+  <audio id="flip" src="booklet/sounds/page_turn.mp3"></audio>
+  <audio id="slide1" src="booklet/sounds/slide_in.mp3"></audio>
+  <audio id="slide2" src="booklet/sounds/slide_out.mp3"></audio>
   <div id="blurBackground" class="blurred-background" style="display: none;"></div>
   ```
 
