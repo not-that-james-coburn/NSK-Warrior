@@ -48,10 +48,16 @@ window.initVirtualGamepad = function() {
                 touch-action: none; 
                 
                 /* scale up gamepad slightly */
-                transform: scale(1.16);
+                transform: scale(1);
                 /* Set origin so it scales upward and outward predictably */
                 transform-origin: bottom center;
-                
+            }
+
+            /* Apply scale ONLY to high-density displays (like Retina screens, modern phones/tablets) */
+            @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+                .ejs_virtualGamepad_left, .ejs_virtualGamepad_right {
+                    transform: scale(1.16);
+                }
             }
             .ejs_dpad_main {
               position: absolute;
