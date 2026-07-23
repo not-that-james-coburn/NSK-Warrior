@@ -11,7 +11,6 @@ Using [**EmulatorJS**](https://github.com/EmulatorJS/) to preserve an original g
 - [Introduction](#introduction)
 - [Usage](#usage)
 - [Features](#features)
-- [Version Manager](#version-manager)
 - [Booklet](#booklet)
 - [License](#license)
 - [Contact](#contact)
